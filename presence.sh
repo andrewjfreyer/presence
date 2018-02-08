@@ -84,11 +84,11 @@ function scanForGuests () {
 				currentGuestIndex=0
 			fi 
 
-			delay $delayBetweenGuestScans
+			sleep $delayBetweenGuestScans
 
 		done
 	else
-		delay $1
+		sleep $1
     fi
 }
 
