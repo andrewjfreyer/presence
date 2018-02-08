@@ -65,6 +65,14 @@ function scanForGuests () {
 			#obtain individual address
 			currentGuestDeviceAddress="${macaddress_guests[$currentGuestIndex]}"
 
+			#check if seen
+			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
+				#should break
+				echo "$DIFFERENCE - $delayBetweenOwnerScansWhenPresent"
+
+				break
+			fi
+
 			#mark as seen
 			seen[$currentGuestIndex]=1
 
@@ -88,14 +96,6 @@ function scanForGuests () {
 				currentGuestIndex=0
 			fi
 
-			#check if seen
-			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
-				#should break
-				echo "$DIFFERENCE - $delayBetweenOwnerScansWhenPresent"
-
-				break
-			fi 
-
 			#sleep between guest scans
 			sleep $delayBetweenGuestScans 
 
@@ -103,7 +103,7 @@ function scanForGuests () {
 			ENDTIME=$(date +%s)
 
 			#refersh differnce
-			DIFFERENCE=$((ENDTIME - STARTTIME))
+			DIFFERENCE=$((ENDTIME - STARTTIME)) 
 		done
 
 		echo "Exiting loop."
