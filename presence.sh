@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------------------------
 # INCLUDES
 # ----------------------------------------------------------------------------------------
-Version=0.1
+Version=0.2
 
 #source the support files
 mqtt_address=""
@@ -28,8 +28,8 @@ mqtt_topicpath=""
 # ----------------------------------------------------------------------------------------
 
 delayBetweenOwnerScansWhenAway=7		#high number advised for bluetooth hardware 
-delayBetweenOwnerScansWhenPresent=12	#high number advised for bluetooth hardware 
-delayBetweenGuestScans=4				#high number advised for bluetooth hardware 
+delayBetweenOwnerScansWhenPresent=30	#high number advised for bluetooth hardware 
+delayBetweenGuestScans=5				#high number advised for bluetooth hardware 
 verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
 
 #current guest
