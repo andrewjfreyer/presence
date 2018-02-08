@@ -43,14 +43,17 @@ function scanForGuests () {
 	#to determine correct exit time for while loop
 	STARTTIME=$(date +%s)
 
+	#init end time
+	ENDTIME=0
+
 	#if we have guest devices to scan for, then scan for them!
 	if [ ! -z "$macaddress_guests" ]; then 
 
+		#calculate 
 		DIFFERENCE=$((ENDTIME - STARTTIME))
 
 		#start while loop during owner scans
-		while [ $DIFFERENCE -lt $delayBetweenOwnerScans ]
-	
+		while [ $DIFFERENCE -lt $delayBetweenOwnerScansWhenPresent ]
 		do
 			#set endtime 
 			ENDTIME=$(date +%s)
