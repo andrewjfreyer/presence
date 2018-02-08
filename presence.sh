@@ -57,7 +57,6 @@ function scanForGuests () {
 		do
 			#set endtime 
 			ENDTIME=$(date +%s)
-			DIFFERENCE=$((ENDTIME - STARTTIME))
 
 			#cache bluetooth results 
 			nameScanResult=""
@@ -84,9 +83,14 @@ function scanForGuests () {
 			if [ "$numberOfGuests" == "$currentGuestIndex" ]; then 
 				currentGuestIndex=0
 				sleep 5
+			else
+				#sleep between guest scans
+				sleep $delayBetweenGuestScans
 			fi 
 
-			sleep $delayBetweenGuestScans
+
+			#refersh differnce
+			DIFFERENCE=$((ENDTIME - STARTTIME))
 		done
 
 		echo "Exiting loop."
