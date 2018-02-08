@@ -87,8 +87,9 @@ function scanForGuests () {
 			fi 
 
 			sleep $delayBetweenGuestScans
-
 		done
+
+		echo "Exiting loop."
 	else
 		sleep $1
     fi
