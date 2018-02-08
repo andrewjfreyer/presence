@@ -57,6 +57,7 @@ function scanForGuests () {
 		do
 			#set endtime 
 			ENDTIME=$(date +%s)
+			DIFFERENCE=$((ENDTIME - STARTTIME))
 
 			#cache bluetooth results 
 			nameScanResult=""
