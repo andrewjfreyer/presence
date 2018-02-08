@@ -65,7 +65,7 @@ function scanForGuests () {
 			currentGuestDeviceAddress="${macaddress_guests[$currentGuestIndex]}"
 
 			#obtain results and append each to the same
-			nameScanResult=$(scan $currentDeviceAddress)
+			nameScanResult=$(scan $currentGuestDeviceAddress)
 			
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
