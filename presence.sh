@@ -46,8 +46,11 @@ function scanForGuests () {
 	#if we have guest devices to scan for, then scan for them!
 	if [ ! -z "$macaddress_guests" ]; then 
 
+		DIFFERENCE=$((ENDTIME - STARTTIME))
+
 		#start while loop during owner scans
-		while [ $((ENDTIME - STARTTIME)) -lt $delayBetweenOwnerScans ]
+		while [ $DIFFERENCE -lt $delayBetweenOwnerScans ]
+	
 		do
 			#set endtime 
 			ENDTIME=$(date +%s)
@@ -103,8 +106,8 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		echo "MQTT MESSAGE: $1 {'confidence':'$2','name':'$3'}"
-		/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "{'confidence':'$2','name':'$3'}"
+		echo "$1 {'confidence':'$2','name':'$3'}"
+		#/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "{'confidence':'$2','name':'$3'}"
 	fi
 }
 
