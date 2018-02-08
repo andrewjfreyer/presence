@@ -46,6 +46,9 @@ function scanForGuests () {
 	#init end time
 	ENDTIME=0
 
+	#this time
+	seen=()
+
 	#if we have guest devices to scan for, then scan for them!
 	if [ ! -z "$macaddress_guests" ]; then 
 
@@ -61,6 +64,9 @@ function scanForGuests () {
 
 			#obtain individual address
 			currentGuestDeviceAddress="${macaddress_guests[$currentGuestIndex]}"
+
+			#mark as seen
+			seen[$currentGuestIndex]=1
 
 			#obtain results and append each to the same
 			nameScanResult=$(scan $currentGuestDeviceAddress)
@@ -80,11 +86,18 @@ function scanForGuests () {
 			#correct the guest index
 			if [ "$numberOfGuests" == "$currentGuestIndex" ]; then 
 				currentGuestIndex=0
-				sleep 5
-			else
-				#sleep between guest scans
-				sleep $delayBetweenGuestScans
+			fi
+
+			#check if seen
+			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
+				#should break
+				echo "$DIFFERENCE - $delayBetweenOwnerScansWhenPresent"
+
+				break
 			fi 
+
+			#sleep between guest scans
+			sleep $delayBetweenGuestScans 
 
 			#set endtime 
 			ENDTIME=$(date +%s)
