@@ -70,10 +70,10 @@ function scanForGuests () {
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
 				#publish the presence of the guest 
-				publish "/guest/$currentDeviceAddress" '100' "$nameScanResult"
+				publish "/guest/$currentGuestDeviceAddress" '100' "$nameScanResult"
 			else
 				#publishe that the guest is not here
-				publish "/guest/$currentDeviceAddress" '0'
+				publish "/guest/$currentGuestDeviceAddress" '0'
 			fi
 
 			#iterate the current guest that we're looking for
