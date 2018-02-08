@@ -63,8 +63,11 @@ function scanForGuests () {
 			
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
-				#publish the presence of the device!
-				publish "/guest/$currentDeviceAddress" '100'
+				#publish the presence of the guest 
+				publish "/guest/$currentDeviceAddress" '100' "$nameScanResult"
+			else
+				#publishe that the guest is not here
+				publish "/guest/$currentDeviceAddress" '0'
 			fi
 
 			#iterate the current guest that we're looking for
@@ -100,7 +103,7 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" && ! -z "$2" ]; then 
-		/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "$2"
+		/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\"}"
 	fi
 }
 
@@ -136,6 +139,7 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 # ----------------------------------------------------------------------------------------
 
 deviceStatusArray=()
+deviceNameArray=()
 
 #begin the operational loop
 while (true); do	
@@ -158,10 +162,13 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#publish message
-			publish "/owner/$currentDeviceAddress" '100'
+			publish "/owner/$currentDeviceAddress" '100' "$nameScanResult"
 
 			#user status			
 			deviceStatusArray[$index]="100"
+
+			#set name array
+			deviceNameArray[$index]="$nameScanResult"
 
 			#we're sure that we're home, so scan for guests
 			scanForGuests $delayBetweenOwnerScansWhenPresent
@@ -186,9 +193,10 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$currentDeviceAddress" '100'
+					publish "/owner/$currentDeviceAddress" '100' "$nameScanResult"
 
 					deviceStatusArray[$index]="100"
+					deviceNameArray[$index]="$nameScanResult"
 
 					scanForGuests $delayBetweenOwnerScansWhenPresent
 					break
@@ -201,9 +209,10 @@ while (true); do
 
 				#update percentage
 				deviceStatusArray[$index]="$percentage"
+				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$currentDeviceAddress" '$percentage'
+				publish "/owner/$currentDeviceAddress" '$percentage' '$expectedName'
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
