@@ -67,8 +67,12 @@ function scanForGuests () {
 
 			#check if seen
 			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
-				#should break
-				echo "$DIFFERENCE - $delayBetweenOwnerScansWhenPresent"
+				
+				#calculate remainder of delay
+				DELAY=$((delayBetweenOwnerScansWhenPresent - DIFFERENCE)) 
+
+				#delay
+				sleep $DELAY 
 
 				break
 			fi
