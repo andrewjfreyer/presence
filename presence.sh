@@ -55,8 +55,6 @@ function scanForGuests () {
 		#start while loop during owner scans
 		while [ $DIFFERENCE -lt $delayBetweenOwnerScansWhenPresent ]
 		do
-			#set endtime 
-			ENDTIME=$(date +%s)
 
 			#cache bluetooth results 
 			nameScanResult=""
@@ -88,6 +86,8 @@ function scanForGuests () {
 				sleep $delayBetweenGuestScans
 			fi 
 
+			#set endtime 
+			ENDTIME=$(date +%s)
 
 			#refersh differnce
 			DIFFERENCE=$((ENDTIME - STARTTIME))
