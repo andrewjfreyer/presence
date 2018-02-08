@@ -102,8 +102,9 @@ function scan () {
 # ----------------------------------------------------------------------------------------
 
 function publish () {
-	if [ ! -z "$1" && ! -z "$2" ]; then 
-		/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\"}"
+	if [ ! -z "$1" ]; then 
+		echo "MQTT MESSAGE: $1 {'confidence':'$2','name':'$3'}"
+		/usr/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/$1" -m "{'confidence':'$2','name':'$3'}"
 	fi
 }
 
