@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------------------------
 # INCLUDES
 # ----------------------------------------------------------------------------------------
-Version=0.2.3
+Version=0.2.4
 
 #establish variables and preferences
 mqtt_address=""
@@ -278,7 +278,7 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$currentDeviceAddress" '100' "$nameScanResult"
+					publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
 
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
@@ -297,7 +297,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$currentDeviceAddress" "$percentage" "$expectedName"
+				publish "/owner/scan/$currentDeviceAddress" "$percentage" "$expectedName"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
@@ -309,7 +309,7 @@ while (true); do
 
 			#publication of zero confidence in currently-tested device
 			if [ "${deviceStatusArray[$index]}" == "0" ]; then 
-				publish "/owner/$currentDeviceAddress" '0'
+				publish "/owner/scan/$currentDeviceAddress" '0'
 			fi
 
 			#continue with scan list
