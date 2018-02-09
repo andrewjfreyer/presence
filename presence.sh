@@ -209,8 +209,11 @@ fi
 # ----------------------------------------------------------------------------------------
 
 #Fill Address Array
-[ -f macaddress_guests ] && IFS=$'\n' read -d '' -r -a macaddress_guests < "guest_devices"
-[ -f macaddress_owners ] && IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
+if [ -f macaddress_guests ]; then 
+	IFS=$'\n' read -d '' -r -a macaddress_guests < "guest_devices"
+fi 
+
+IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
 
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
