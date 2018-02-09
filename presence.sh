@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------------------------
 # INCLUDES
 # ----------------------------------------------------------------------------------------
-Version=0.2.2
+Version=0.2.3
 
 #establish variables and preferences
 mqtt_address=""
@@ -190,10 +190,10 @@ if [ ! -z "$1" ]; then
 		-w|-wifi )
 			case "$2" in 
 				-g|-guest )
-					echo incrementWiFiMacAddress "$3" >> guest_devices
+					incrementWiFiMacAddress "$3" >> guest_devices
 				;;
 				-o|-owner )
-					echo incrementWiFiMacAddress "$3" >> owner_devices
+					incrementWiFiMacAddress "$3" >> owner_devices
 				;;
 			esac
 		;;
