@@ -23,8 +23,8 @@ mqtt_user=""
 mqtt_password=""
 mqtt_topicpath="" 
 
-#or load from a source file
-source "mqtt_preferences"
+#load preferences if present
+MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 
 # ----------------------------------------------------------------------------------------
 # Set Program Variables
@@ -36,7 +36,7 @@ delayBetweenGuestScans=5				#high number advised for bluetooth hardware
 verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
 
 #or load from a source file
-source "behavior_preferences"
+DELAY_CONFIG=behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
 
 #current guest
 currentGuestIndex=0
@@ -118,9 +118,6 @@ function scanForGuests () {
 			if [ "$nameScanResult" != "" ]; then
 				#publish the presence of the guest 
 				publish "/guest/$currentGuestDeviceAddress" '100' "$nameScanResult"
-			else
-				#publishe that the guest is not here
-				publish "/guest/$currentGuestDeviceAddress" '0'
 			fi
 
 			#iterate the current guest that we're looking for
@@ -141,7 +138,6 @@ function scanForGuests () {
 			DIFFERENCE=$((ENDTIME - STARTTIME)) 
 		done
 
-		echo "Exiting loop."
 	else
 		sleep $1
     fi
