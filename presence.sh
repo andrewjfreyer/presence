@@ -54,9 +54,11 @@ function incrementWiFiMacAddress () {
 		trim=${addr:15:2} #(echo "$addr" | tail -c 3)
 		prefix=${addr:0:14}
 
+		echo "ADDR: $addr; TRIM: $trim; PREFIX: $prefix"
+
 		#math it
 		mac_decimal=$(echo "obase=10;ibase=16; $trim" | bc ) # to convert to decimal
-		mac_incremented=$( expr "$mac_decimal" + 1 ) # to add one 
+		mac_incremented=$(expr "$mac_decimal" + 1 ) # to add one 
 		mac_hex_incremented=$(echo "obase=16;ibase=10; $mac_incremented" | bc ) # to convert to decimal
 
 		#output variables
