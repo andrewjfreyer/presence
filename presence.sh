@@ -15,13 +15,7 @@
 # ----------------------------------------------------------------------------------------
 # INCLUDES
 # ----------------------------------------------------------------------------------------
-Version=0.2.4
-
-#establish variables and preferences
-mqtt_address=""
-mqtt_user=""
-mqtt_password=""
-mqtt_topicpath="" 
+Version=0.2.5
 
 #load preferences if present
 MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -247,7 +241,7 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#publish message
-			publish "/owner/$currentDeviceAddress" '100' "$nameScanResult"
+			publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
 
 			#user status			
 			deviceStatusArray[$index]="100"
