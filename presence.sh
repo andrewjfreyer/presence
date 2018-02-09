@@ -297,7 +297,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$currentDeviceAddress" '$percentage' '$expectedName'
+				publish "/owner/$currentDeviceAddress" "$percentage" "$expectedName"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
