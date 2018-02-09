@@ -181,9 +181,11 @@ if [ ! -z "$1" ]; then
 			case "$2" in 
 				-g|-guest )
 					echo "$3" >> guest_devices
+					exit 1
 				;;
 				-o|-owner )
 					echo "$3" >> owner_devices
+					exit 1
 				;;
 			esac
 		;;
@@ -191,9 +193,11 @@ if [ ! -z "$1" ]; then
 			case "$2" in 
 				-g|-guest )
 					incrementWiFiMacAddress "$3" >> guest_devices
+					exit 1
 				;;
 				-o|-owner )
 					incrementWiFiMacAddress "$3" >> owner_devices
+					exit 1
 				;;
 			esac
 		;;
@@ -205,8 +209,8 @@ fi
 # ----------------------------------------------------------------------------------------
 
 #Fill Address Array
-IFS=$'\n' read -d '' -r -a macaddress_guests < "guest_devices"
-IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
+[ -f macaddress_guests ] && IFS=$'\n' read -d '' -r -a macaddress_guests < "guest_devices"
+[ -f macaddress_owners ] && IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
 
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
