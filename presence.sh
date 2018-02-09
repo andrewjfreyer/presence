@@ -15,13 +15,16 @@
 # ----------------------------------------------------------------------------------------
 # INCLUDES
 # ----------------------------------------------------------------------------------------
-Version=0.2
+Version=0.2.2
 
-#source the support files
+#establish variables and preferences
 mqtt_address=""
 mqtt_user=""
 mqtt_password=""
 mqtt_topicpath="" 
+
+#or load from a source file
+source "mqtt_preferences"
 
 # ----------------------------------------------------------------------------------------
 # Set Program Variables
@@ -32,8 +35,36 @@ delayBetweenOwnerScansWhenPresent=30	#high number advised for bluetooth hardware
 delayBetweenGuestScans=5				#high number advised for bluetooth hardware 
 verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
 
+#or load from a source file
+source "behavior_preferences"
+
 #current guest
 currentGuestIndex=0
+
+# ----------------------------------------------------------------------------------------
+# 	INCREMENT A WIFI BLUETOOTH ADDRESS AND RETURN
+# ----------------------------------------------------------------------------------------
+
+function incrementWiFiMacAddress () {
+	if [ ! -z "$1" ]; then 
+
+		#receive
+		addr="$1"
+		#trim to last two
+		trim=${addr:15:2} #(echo "$addr" | tail -c 3)
+		prefix=${addr:0:14}
+
+		#math it
+		mac_decimal=$(echo "obase=10;ibase=16; $trim" | bc ) # to convert to decimal
+		mac_incremented=$( expr "$mac_decimal" + 1 ) # to add one 
+		mac_hex_incremented=$(echo "obase=16;ibase=10; $mac_incremented" | bc ) # to convert to decimal
+
+		#output variables
+		bt_addr="$prefix:$(printf '%02x' 0x$mac_hex_incremented)"
+
+		echo "$bt_addr"
+	fi
+}
 
 # ----------------------------------------------------------------------------------------
 # SCAN FOR GUEST DEVICES DURING OWNER DEVICE TIMEOUTS
@@ -149,6 +180,18 @@ if [ ! -z "$1" ]; then
 		--version )
 			echo "$Version"
 			exit 1
+		;;
+	    --guest_bluetooth )
+			echo "$1" >> guest_devices
+		;;
+		--guest_wifi )
+			incrementWiFiMacAddress "$1" >> guest_devices
+		;;
+		--owner_bluetooth )
+			echo "$1" >> owner_devices
+		;;
+		--owner_wifi )
+			incrementWiFiMacAddress "$1" >> owner_devices
 		;;
 	esac
 fi 
