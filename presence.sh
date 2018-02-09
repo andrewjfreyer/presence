@@ -54,8 +54,6 @@ function incrementWiFiMacAddress () {
 		trim=${addr:15:2} #(echo "$addr" | tail -c 3)
 		prefix=${addr:0:14}
 
-		echo "ADDR: $addr; TRIM: $trim; PREFIX: $prefix"
-
 		#math it
 		mac_decimal=$(echo "obase=10;ibase=16; $trim" | bc ) # to convert to decimal
 		mac_incremented=$(expr "$mac_decimal" + 1 ) # to add one 
@@ -175,21 +173,29 @@ function publish () {
 if [ ! -z "$1" ]; then 
 	#very rudamentary process here, only limited support for input functions
 	case "$1" in
-		--version )
+		-version )
 			echo "$Version"
 			exit 1
 		;;
-	    --guest_bluetooth )
-			echo "$1" >> guest_devices
+	    -b|-bluetooth )
+			case "$2" in 
+				-g|-guest )
+					echo "$3" >> guest_devices
+				;;
+				-o|-owner )
+					echo "$3" >> owner_devices
+				;;
+			esac
 		;;
-		--guest_wifi )
-			incrementWiFiMacAddress "$1" >> guest_devices
-		;;
-		--owner_bluetooth )
-			echo "$1" >> owner_devices
-		;;
-		--owner_wifi )
-			incrementWiFiMacAddress "$1" >> owner_devices
+		-w|-wifi )
+			case "$2" in 
+				-g|-guest )
+					echo incrementWiFiMacAddress "$3" >> guest_devices
+				;;
+				-o|-owner )
+					echo incrementWiFiMacAddress "$3" >> owner_devices
+				;;
+			esac
 		;;
 	esac
 fi 
