@@ -281,11 +281,6 @@ while (true); do
 					break
 				fi 
 
-				#if we have 0, then we know we haven't been found yet
-				if [ "${deviceStatusArray[$index]}" == "0" ] || [ "${deviceStatusArray[$index]}" == "" ]; then 
-					break
-				fi  
-
 				#update percentage
 				deviceStatusArray[$index]="$percentage"
 				expectedName="${deviceNameArray[$index]}"
