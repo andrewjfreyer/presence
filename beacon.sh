@@ -35,7 +35,7 @@ if [[ $1 == "parse" ]]; then
 					JSON_MSG="{\"confidence\":\"100\",\"name\":\"\",\"uuid\":\"$UUID\",\"major\":\"$MAJOR\",\"minor\":\"$MINOR\",\"power\":\"$POWER\"}"
 
 					#send message via MQTT of beacon
-					/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "$JSON_MSG"
+					/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/owner/beacon" -m "$JSON_MSG"
 
 				fi
 				capturing=""
