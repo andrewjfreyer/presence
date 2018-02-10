@@ -181,5 +181,5 @@ else
  	sudo hcitool lescan --duplicates 1>/dev/null &
 
 
-	sudo hcidump --raw | $0 parse $1
+	sudo hcidump --raw | bash $Base/beacon.sh parse $1
 fi
