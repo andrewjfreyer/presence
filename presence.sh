@@ -241,11 +241,8 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#no duplicate messages
-			if [ "${deviceStatusArray[$index]}" != "100" ]; then 
-				#publish message
-				publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
-			fi
-			
+			publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
+
 			#user status			
 			deviceStatusArray[$index]="100"
 
@@ -285,7 +282,7 @@ while (true); do
 				fi 
 
 				#if we have 0, then we know we haven't been found yet
-				if [ "${deviceStatusArray[$index]}" == "0" ]; then 
+				if [ "${deviceStatusArray[$index]}" == "0" ] || [ "${deviceStatusArray[$index]}" == "" ]; then 
 					break
 				fi  
 
