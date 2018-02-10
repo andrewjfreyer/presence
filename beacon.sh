@@ -14,13 +14,14 @@
 #
 # ----------------------------------------------------------------------------------------
 
-Version=0.1
+Version=0.1.1
+Base="/home/andrewjfreyer/presence"
 
 # ----------------------------------------------------------------------------------------
 # Configuration Scrupt
 # ----------------------------------------------------------------------------------------
 
-MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 
 # ----------------------------------------------------------------------------------------
 # Main Recursion

@@ -17,9 +17,10 @@
 # ----------------------------------------------------------------------------------------
 
 Version=0.2.6
+Base="/home/andrewjfreyer/presence"
 
 #load preferences if present
-MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 
 # ----------------------------------------------------------------------------------------
 # Set Program Variables
@@ -31,7 +32,7 @@ delayBetweenGuestScans=5				#high number advised for bluetooth hardware
 verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
 
 #or load from a source file
-DELAY_CONFIG=behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
+DELAY_CONFIG=$Base/behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
 
 #current guest
 currentGuestIndex=0
@@ -175,11 +176,11 @@ if [ ! -z "$1" ]; then
 	    -b|-bluetooth )
 			case "$2" in 
 				-g|-guest )
-					echo "$3" >> guest_devices
+					echo "$3" >> $Base/guest_devices
 					exit 1
 				;;
 				-o|-owner )
-					echo "$3" >> owner_devices
+					echo "$3" >> $Base/owner_devices
 					exit 1
 				;;
 			esac
@@ -187,11 +188,11 @@ if [ ! -z "$1" ]; then
 		-w|-wifi )
 			case "$2" in 
 				-g|-guest )
-					incrementWiFiMacAddress "$3" >> guest_devices
+					incrementWiFiMacAddress "$3" >> $Base/guest_devices
 					exit 1
 				;;
 				-o|-owner )
-					incrementWiFiMacAddress "$3" >> owner_devices
+					incrementWiFiMacAddress "$3" >> $Base/owner_devices
 					exit 1
 				;;
 			esac
@@ -205,10 +206,10 @@ fi
 
 #Fill Address Array
 if [ -f macaddress_guests ]; then 
-	IFS=$'\n' read -d '' -r -a macaddress_guests < "guest_devices"
+	IFS=$'\n' read -d '' -r -a macaddress_guests < "$Base/guest_devices"
 fi 
 
-IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
+IFS=$'\n' read -d '' -r -a macaddress_owners < "$Base/owner_devices"
 
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
@@ -218,7 +219,7 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 # Complementary Program
 # ----------------------------------------------------------------------------------------
 
-[ -f beacon.sh ] && sudo bash beacon.sh & 
+[ -f $Base/beacon.sh ] && sudo bash $Base/beacon.sh & 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
