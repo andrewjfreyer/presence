@@ -155,7 +155,7 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		echo "$1 {'confidence':'$2','name':'$3'}"
+		#echo "$1 {'confidence':'$2','name':'$3'}"
 		/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{'confidence':'$2','name':'$3'}"
 	fi
 }
