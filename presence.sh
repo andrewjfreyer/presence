@@ -111,7 +111,7 @@ function scanForGuests () {
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
 				#publish the presence of the guest 
-				publish "/guest/$currentGuestDeviceAddress" '100' "$nameScanResult"
+				publish "/guest/scan/$currentGuestDeviceAddress" '100' "$nameScanResult"
 			fi
 
 			#iterate the current guest that we're looking for
@@ -240,9 +240,12 @@ while (true); do
 		#this device name is present
 		if [ "$nameScanResult" != "" ]; then
 
-			#publish message
-			publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
-
+			#no duplicate messages
+			if [ "${deviceStatusArray[$index]}" != "100" ]; then 
+				#publish message
+				publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
+			fi
+			
 			#user status			
 			deviceStatusArray[$index]="100"
 
