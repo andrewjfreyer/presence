@@ -4,6 +4,9 @@
 # Edited by Andrew J Freyer
 # version 20180209
 
+# CONFIGURATION
+MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+
 if [[ $1 == "parse" ]]; then
   packet=""
   capturing=""
@@ -27,10 +30,13 @@ if [[ $1 == "parse" ]]; then
           MINOR=`echo "ibase=16; $MINOR" | bc`
           POWER=`echo "ibase=16; $POWER" | bc`
           POWER=$[POWER - 256]
-          if [[ $2 == "-b" ]]; then
-	    echo "$UUID $MAJOR $MINOR $POWER"
-          else
-    	    echo "UUID: $UUID MAJOR: $MAJOR MINOR: $MINOR POWER: $POWER"
+    
+          #compare UUID to database
+          JSON_MSG="{\"confidence\":\"100\",\"name\":\"\",\"uuid\":\"$UUID\",\"major\":\"$MAJOR\",\"minor\":\"$MINOR\",\"power\":\"$POWER\"}"
+
+          #send message via MQTT of beacon
+          /usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "$JSON_MSG"
+
           fi
         fi
         capturing=""
