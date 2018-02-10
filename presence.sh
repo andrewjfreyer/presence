@@ -16,7 +16,7 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.2.6
+Version=0.2.7
 Base="/home/andrewjfreyer/presence"
 
 #load preferences if present
