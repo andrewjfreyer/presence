@@ -16,7 +16,7 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.2.5
+Version=0.2.6
 
 #load preferences if present
 MQTT_CONFIG=mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -213,6 +213,12 @@ IFS=$'\n' read -d '' -r -a macaddress_owners < "owner_devices"
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
 numberOfGuests=$((${#macaddress_guests[@]}))
+
+# ----------------------------------------------------------------------------------------
+# Complementary Program
+# ----------------------------------------------------------------------------------------
+
+[ -f beacon.sh ] && sudo bash beacon.sh & 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
