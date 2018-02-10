@@ -157,7 +157,7 @@ if [[ $1 == "parse" ]]; then
 
 							#update message
 							JSON_MSG="{\"confidence\":\"$percentage\",\"name\":\"$currentDeviceUUID\",\"power\":\"$POWER\"}"
-							/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/guest/beacon" -m "$JSON_MSG"
+							/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/owner/beacon/$key" -m "$JSON_MSG"
 						done
 
 						#sleep until next interval
