@@ -22,6 +22,7 @@ Base="/home/andrewjfreyer/presence"
 # ----------------------------------------------------------------------------------------
 
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+DELAY_CONFIG=$Base/behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
 
 # ----------------------------------------------------------------------------------------
 # Load Beacons
@@ -133,7 +134,7 @@ if [[ $1 == "parse" ]]; then
 					INTERVAL=$((ENDTIME - LAUNCHTIME))
 
 					#only perform these calculations every few second
-					if [ $((INTERVAL % 5 )) == 0 ]; then 
+					if [ $((INTERVAL % 15 )) == 0 ]; then 
 						#determine whether enough time has elapsed for each owner device
 						for index in "${!ownerDeviceTimeStampArray[@]}"
 						do
@@ -145,10 +146,10 @@ if [[ $1 == "parse" ]]; then
 							DIFFERENCE=$((ENDTIME - STARTTIME))
 
 							#determine percentage confidence 
-							if [ $DIFFERENCE -gt $timeoutUntilAway ]; then 
+							if [ "$DIFFERENCE" -gt "$timeoutUntilAway" ]; then 
 								percentage=0
 							else 
-								percentage=$(( 100 * ( 1.0 - ( $DIFFERENCE / $timeoutUntilAway ) ) ))
+                                percentage=$(( 100 - (100 * "$DIFFERENCE" / "$timeoutUntilAway"))) 
 							fi 
 
 							#get UUID
@@ -156,8 +157,11 @@ if [[ $1 == "parse" ]]; then
 
 							#update message
 							JSON_MSG="{\"confidence\":\"$percentage\",\"name\":\"$currentDeviceUUID\",\"power\":\"$POWER\"}"
-
+							/usr/local/bin/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/guest/beacon" -m "$JSON_MSG"
 						done
+
+						#sleep until next interval
+						sleep 1
 					fi 
 				fi
 				capturing=""
