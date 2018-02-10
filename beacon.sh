@@ -161,7 +161,7 @@ if [[ $1 == "parse" ]]; then
 						done
 
 						#sleep until next interval
-						sleep 1
+						sleep 6
 					fi 
 				fi
 				capturing=""
