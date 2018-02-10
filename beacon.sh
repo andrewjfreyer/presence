@@ -79,5 +79,5 @@ if [[ $1 == "parse" ]]; then
 		fi
 	done
 else
-	sudo hcidump --raw | ./$0 parse $1
+	sudo hcidump --raw | $0 parse $1
 fi
