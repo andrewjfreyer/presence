@@ -293,7 +293,6 @@ while (true); do
 
 				#delay default time
 				scanForGuests $delayBetweenOwnerScansWhenAway
-			
 			done
 
 			#publication of zero confidence in currently-tested device
