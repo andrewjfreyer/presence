@@ -1,0 +1,5 @@
+delayBetweenOwnerScansWhenAway=7		#high number advised for bluetooth hardware 
+delayBetweenOwnerScansWhenPresent=30	#high number advised for bluetooth hardware 
+delayBetweenGuestScans=5				#high number advised for bluetooth hardware 
+verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
+timeoutUntilAway=40						#higher means less false rejection

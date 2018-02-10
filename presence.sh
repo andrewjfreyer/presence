@@ -26,11 +26,6 @@ MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 # Set Program Variables
 # ----------------------------------------------------------------------------------------
 
-delayBetweenOwnerScansWhenAway=7		#high number advised for bluetooth hardware 
-delayBetweenOwnerScansWhenPresent=30	#high number advised for bluetooth hardware 
-delayBetweenGuestScans=5				#high number advised for bluetooth hardware 
-verifyByRepeatedlyQuerying=5 			#lower means more false rejection 
-
 #or load from a source file
 DELAY_CONFIG=$Base/behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
 
