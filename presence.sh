@@ -16,7 +16,7 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.2.8
+Version=0.2.9
 Base="/home/andrewjfreyer/presence"
 
 #load preferences if present
@@ -31,31 +31,6 @@ DELAY_CONFIG=$Base/behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_
 
 #current guest
 currentGuestIndex=0
-
-# ----------------------------------------------------------------------------------------
-# 	INCREMENT A WIFI BLUETOOTH ADDRESS AND RETURN
-# ----------------------------------------------------------------------------------------
-
-function incrementWiFiMacAddress () {
-	if [ ! -z "$1" ]; then 
-
-		#receive
-		addr="$1"
-		#trim to last two
-		trim=${addr:15:2} #(echo "$addr" | tail -c 3)
-		prefix=${addr:0:14}
-
-		#math it
-		mac_decimal=$(echo "obase=10;ibase=16; $trim" | bc ) # to convert to decimal
-		mac_incremented=$(expr "$mac_decimal" + 1 ) # to add one 
-		mac_hex_incremented=$(echo "obase=16;ibase=10; $mac_incremented" | bc ) # to convert to decimal
-
-		#output variables
-		bt_addr="$prefix:$(printf '%02x' 0x$mac_hex_incremented)"
-
-		echo "$bt_addr"
-	fi
-}
 
 # ----------------------------------------------------------------------------------------
 # SCAN FOR GUEST DEVICES DURING OWNER DEVICE TIMEOUTS
@@ -161,10 +136,7 @@ function publish () {
 # ----------------------------------------------------------------------------------------
 
 #Fill Address Array
-if [ -f macaddress_guests ]; then 
-	IFS=$'\n' read -d '' -r -a macaddress_guests < "$Base/guest_devices"
-fi 
-
+IFS=$'\n' read -d '' -r -a macaddress_guests < "$Base/guest_devices"
 IFS=$'\n' read -d '' -r -a macaddress_owners < "$Base/owner_devices"
 
 #Number of clients that are monitored
