@@ -157,45 +157,6 @@ function publish () {
 }
 
 # ----------------------------------------------------------------------------------------
-# ARGV processing 
-# ----------------------------------------------------------------------------------------
-
-#argv updates
-if [ ! -z "$1" ]; then 
-	#very rudamentary process here, only limited support for input functions
-	case "$1" in
-		-version )
-			echo "$Version"
-			exit 1
-		;;
-	    -b|-bluetooth )
-			case "$2" in 
-				-g|-guest )
-					echo "$3" >> $Base/guest_devices
-					exit 1
-				;;
-				-o|-owner )
-					echo "$3" >> $Base/owner_devices
-					exit 1
-				;;
-			esac
-		;;
-		-w|-wifi )
-			case "$2" in 
-				-g|-guest )
-					incrementWiFiMacAddress "$3" >> $Base/guest_devices
-					exit 1
-				;;
-				-o|-owner )
-					incrementWiFiMacAddress "$3" >> $Base/owner_devices
-					exit 1
-				;;
-			esac
-		;;
-	esac
-fi 
-
-# ----------------------------------------------------------------------------------------
 # Preliminary Notifications
 # ----------------------------------------------------------------------------------------
 
