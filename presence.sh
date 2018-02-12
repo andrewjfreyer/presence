@@ -16,7 +16,7 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.2.7
+Version=0.2.8
 Base="/home/andrewjfreyer/presence"
 
 #load preferences if present
@@ -209,12 +209,6 @@ IFS=$'\n' read -d '' -r -a macaddress_owners < "$Base/owner_devices"
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
 numberOfGuests=$((${#macaddress_guests[@]}))
-
-# ----------------------------------------------------------------------------------------
-# Complementary Program
-# ----------------------------------------------------------------------------------------
-
-[ -f $Base/beacon.sh ] && sudo bash $Base/beacon.sh & 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
