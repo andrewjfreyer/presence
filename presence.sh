@@ -16,10 +16,9 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.2
+Version=0.3.3
 Base="/home/andrewjfreyer/presence"
 PubLocation='/usr/local/bin'
-Location='Room'
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -85,7 +84,7 @@ function scanForGuests () {
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
 				#publish the presence of the guest 
-				publish "/guest/$Location/$currentGuestDeviceAddress" '100' "$nameScanResult"
+				publish "/guest/$mqtt_room/$currentGuestDeviceAddress" '100' "$nameScanResult"
 			fi
 
 			#iterate the current guest that we're looking for
@@ -173,7 +172,7 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#no duplicate messages
-			publish "/owner/$Location/$currentDeviceAddress" '100' "$nameScanResult"
+			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult"
 
 			#user status			
 			deviceStatusArray[$index]="100"
@@ -204,7 +203,7 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$Location/$currentDeviceAddress" '100' "$nameScanResult"
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult"
 
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
@@ -218,7 +217,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$Location/$currentDeviceAddress" "$percentage" "$expectedName"
+				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
@@ -229,7 +228,7 @@ while (true); do
 
 			#publication of zero confidence in currently-tested device
 			if [ "${deviceStatusArray[$index]}" == "0" ]; then 
-				publish "/owner/$Location/$currentDeviceAddress" '0'
+				publish "/owner/$mqtt_room/$currentDeviceAddress" '0'
 			fi
 
 			#continue with scan list
