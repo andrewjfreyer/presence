@@ -16,9 +16,10 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.1
+Version=0.3.2
 Base="/home/andrewjfreyer/presence"
 PubLocation='/usr/local/bin'
+Location='Room'
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -84,7 +85,7 @@ function scanForGuests () {
 			#this device name is present
 			if [ "$nameScanResult" != "" ]; then
 				#publish the presence of the guest 
-				publish "/guest/scan/$currentGuestDeviceAddress" '100' "$nameScanResult"
+				publish "/guest/$Location/$currentGuestDeviceAddress" '100' "$nameScanResult"
 			fi
 
 			#iterate the current guest that we're looking for
@@ -172,7 +173,7 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#no duplicate messages
-			publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
+			publish "/owner/$Location/$currentDeviceAddress" '100' "$nameScanResult"
 
 			#user status			
 			deviceStatusArray[$index]="100"
@@ -203,7 +204,7 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/scan/$currentDeviceAddress" '100' "$nameScanResult"
+					publish "/owner/$Location/$currentDeviceAddress" '100' "$nameScanResult"
 
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
@@ -217,7 +218,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/scan/$currentDeviceAddress" "$percentage" "$expectedName"
+				publish "/owner/$Location/$currentDeviceAddress" "$percentage" "$expectedName"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
@@ -228,7 +229,7 @@ while (true); do
 
 			#publication of zero confidence in currently-tested device
 			if [ "${deviceStatusArray[$index]}" == "0" ]; then 
-				publish "/owner/scan/$currentDeviceAddress" '0'
+				publish "/owner/$Location/$currentDeviceAddress" '0'
 			fi
 
 			#continue with scan list
