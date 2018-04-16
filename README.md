@@ -37,17 +37,19 @@ Messages are JSON formatted and contain only **name** and **confidence** fields:
 
 6. **[SETUP WIFI]** Create **wpa_supplicant.conf** file in root directory and add Wi-Fi details for home Wi-Fi:
 
-    country=US
-        ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-        update_config=1
+```
+country=US
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+    update_config=1
 
-    network={
-        ssid="Your Network Name"
-        psk="Your Network Password"
-        key_mgmt=WPA-PSK
-    }
+network={
+    ssid="Your Network Name"
+    psk="Your Network Password"
+    key_mgmt=WPA-PSK
+}
+```
 
- 7. **FIRST STARTUP** Insert SD card and power on Raspberry Pi Zero W. On first boot, the newly-created **wpa_supplicant.conf** file and **ssh** will be moved to appropriate directories. Find the IP address of the Pi via your router. One method is scanning for open ssh ports (port 22) on your local network:
+ 7. **[FIRST STARTUP]** Insert SD card and power on Raspberry Pi Zero W. On first boot, the newly-created **wpa_supplicant.conf** file and **ssh** will be moved to appropriate directories. Find the IP address of the Pi via your router. One method is scanning for open ssh ports (port 22) on your local network:
 
       nmap 192.168.1.0/24 -p 22
 
