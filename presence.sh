@@ -16,9 +16,8 @@
 # INCLUDES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.3
+Version=0.3.4
 Base="/home/andrewjfreyer/presence"
-PubLocation='/usr/local/bin'
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -128,7 +127,7 @@ function scan () {
 function publish () {
 	if [ ! -z "$1" ]; then 
 		#echo "$1 {'confidence':'$2','name':'$3'}"
-		$PubLocation/mosquitto_pub -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\"}"
+		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\"}"
 	fi
 }
 
