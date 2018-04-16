@@ -124,7 +124,6 @@ sudo service bluetooth status
 
 7. **[REBOOT]**
 ```
-
 sudo reboot
 ```
 
@@ -150,7 +149,6 @@ sudo aptitude install libmosquitto-dev mosquitto mosquitto-clients
 
 9. **[INSTALL PRESENCE]**
 ```
-
 #install git
 sudo apt-get install git
 cd ~
@@ -181,7 +179,6 @@ mqtt_room="your pi's location"
 
 12. **[CONFIGURE SERVICE]** Create file at **/etc/systemd/system/presence.service** and include content:
 ```
-
 [Unit]
 Description=Presence service
 
