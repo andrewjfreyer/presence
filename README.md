@@ -1,7 +1,7 @@
 presence
 =======
 
-***TL;DR***: *Bluetooth-based presence detection useful for [mqtt-based](http://mqtt.org) home automation. More granular, responsive, and reliable than device-reported GPS, does not require any app to be running or installed, does not require device pairing. Designed to run as service on a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/).*
+***TL;DR***: *Bluetooth-based presence detection useful for [mqtt-based](http://mqtt.org) home automation. More granular, responsive, and reliable than device-reported GPS. Cheaper, more reliable, more configurable, and less mqtt-spammy than Happy Bubbles. Does not require any app to be running or installed. Does not require device pairing. Designed to run as service on a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/).*
 
 <h1>Summary</h1>
 
@@ -21,7 +21,70 @@ Messages are JSON formatted and contain only **name** and **confidence** fields:
      { name : "Andrew's iPhone", confidence : 100}
      { name : "", confidence : 0}
 
-<h1>Installation Instructions for fresh install of Raspbian Jessie Stretch:</h1>
+<h1>Use with Home Assistant</h1>
+
+The presence script can be used as an [mqtt sensor](https://www.home-assistant.io/components/sensor.mqtt/) in [Home Assistant.](https://www.home-assistant.io). In order to detect presence in a home that has three floors and a garage, we might inclue one Raspberry Pi per floor. For average houses, a single well-placed sensor can probably work, but for more reliability at the edges of the house, more sensors are better. 
+
+
+```
+- platform: mqtt
+  state_topic: 'location/owner/first floor/00:00:00:00:00:00'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'Andrew First Floor'
+
+- platform: mqtt
+  state_topic: 'location/owner/second floor/00:00:00:00:00:00'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'Andrew Second Floor'
+
+- platform: mqtt
+  state_topic: 'location/owner/third floor/00:00:00:00:00:00'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'Andrew Third Floor'
+
+- platform: mqtt
+  state_topic: 'location/owner/garage/00:00:00:00:00:00'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'Andrew Garage'
+```
+
+These sensors can be combined/averaged using a [min_max](https://www.home-assistant.io/components/sensor.min_max/):
+
+```
+- platform: min_max
+  name: "Andrew Home Occupancy Confidence"
+  type: mean
+  round_digits: 0
+  entity_ids:
+    - sensor.andrew_garage
+    - sensor.andrew_third_floor
+    - sensor.andrew_second_floor
+    - sensor.andrew_first_floor
+```
+
+So, as a result of this combination, we use the entity **sensor.andrew_home_occupancy_confidence** in automations to control the state of an **input_boolean** that represents a very high confidence of a user being home or not. 
+
+As an example:
+
+```
+- alias: Andrew Occupancy 
+  hide_entity: true
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.andrew_home_occupancy_confidence
+      above: 10
+  action:
+    - service: homeassistant.turn_on
+      data:
+        entity_id: input_boolean.andrew_occupancy
+```
+___
+
+<h1>Installation Instructions (Raspbian Jessie Lite Stretch):</h1>
 
 <h2>Setup of SD Card</h2>
 
@@ -29,7 +92,7 @@ Messages are JSON formatted and contain only **name** and **confidence** fields:
 
 2. Download etcher from [etcher.io](https://etcher.io)
 
-3. Image **jessie lite stretch** to SD card
+3. Image **jessie lite stretch** to SD card. [Instructions here.](https://www.raspberrypi.org/magpi/pi-sd-etcher/)
 
 4. Mount **boot** partition of imaged SD card
 
@@ -200,5 +263,5 @@ sudo systemctl enable presence.service
 sudo systemctl start presence.service
 ```
 
-That's it. Your broker should be receiving messages. 
+That's it. Your broker should be receiving messages and the presence service will restart each time the Raspberry Pi boots.  
 
