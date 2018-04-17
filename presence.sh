@@ -129,7 +129,7 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		distance_approx=$(convertTimeToDistance($4))
+		distance_approx=$(convertTimeToDistance $4)
 		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\"}"
 	fi
 }
