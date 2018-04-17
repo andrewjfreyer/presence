@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.6
+Version=0.3.60
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -130,7 +130,7 @@ function scan () {
 function publish () {
 	if [ ! -z "$1" ]; then 
 		distance_approx=$(convertTimeToDistance $4 $2)
-		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\"}"
+		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")\"}"
 	fi
 }
 
@@ -207,7 +207,7 @@ while (true); do
 		ENDSCAN=$(date +%s$N)
 		
 		#calculate difference
-		SCAN_DURATION_MILISECONDS=$(( (ENDSCAN - STARTSCAN)/1000000 )) 
+		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 		#echo to stderr for debug and testing
 		(>&2 echo "Duration: $DIFFERENCE ns")
@@ -216,7 +216,7 @@ while (true); do
 		if [ "$nameScanResult" != "" ]; then
 
 			#no duplicate messages
-			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION_MILISECONDS"
+			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"
 
 			#user status			
 			deviceStatusArray[$index]="100"
@@ -251,12 +251,12 @@ while (true); do
 				ENDSCAN=$(date +%s$N)
 				
 				#calculate difference
-				SCAN_DURATION_MILISECONDS=$(( (ENDSCAN - STARTSCAN)/1000000 )) 
+				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION_MILISECONDS"
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"
 
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
