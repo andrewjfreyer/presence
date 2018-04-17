@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.64
+Version=0.3.63
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -142,7 +142,7 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#post to mqtt
-		$("$MQTTPubPath") -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\",\"distance\":\"$distance_approx\"}"
+		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\",\"distance\":\"$distance_approx\",\"timestamp\":\"$stamp\"}"
 	fi
 }
 
@@ -162,16 +162,18 @@ function convertTimeToDistance () {
 
 	if [ ! -z "$1" ] && [ "$2" != "0" ]; then 
 		if [ "$1" -lt 500 ]; then 
-			echo "Very Close"
+			echo "very close"
 		elif [ "$1" -lt 1000 ]; then 
-			echo "Nearby"
+			echo "nearby"
 		elif [ "$1" -lt 1500 ]; then 
-			echo "Far"
+			echo "far"
 		elif [ "$1" -lt 2000 ]; then 
-			echo "Distant"
+			echo "distant"
 		elif [ "$1" -gt 2000 ]; then 
-			echo "Very Distant"
+			echo "very distant"
 		fi 
+	else
+		echo "infinite"
 	fi
 }
 
@@ -224,7 +226,7 @@ while (true); do
 		ENDSCAN=$(date +%s$N)
 		
 		#calculate difference
-		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
 
 		#echo to stderr for debug and testing
 		(>&2 echo "Duration: $DIFFERENCE ns")
@@ -268,7 +270,7 @@ while (true); do
 				ENDSCAN=$(date +%s$N)
 				
 				#calculate difference
-				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
