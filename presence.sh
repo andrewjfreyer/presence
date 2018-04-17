@@ -229,7 +229,7 @@ while (true); do
 		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 		#echo to stderr for debug and testing
-		(>&2 echo "Duration: $DIFFERENCE ns")
+		(>&2 echo "Duration: $SCAN_DURATION ms")
 
 		#this device name is present
 		if [ "$nameScanResult" != "" ]; then
@@ -271,6 +271,8 @@ while (true); do
 				
 				#calculate difference
 				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+
+				(>&2 echo "Duration: $SCAN_DURATION ms")
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
