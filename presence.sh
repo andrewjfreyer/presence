@@ -20,6 +20,7 @@ Version=0.3.60
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
+MQTTPubPath=$(which mosquitto_pub)
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -130,7 +131,15 @@ function scan () {
 function publish () {
 	if [ ! -z "$1" ]; then 
 		distance_approx=$(convertTimeToDistance $4 $2)
-		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")\"}"
+		name="$3"
+
+		#if no name, return "unknown"
+		if [ -z "$3" ]; then 
+			name="Unknown"
+		fi 
+
+		#post to mqtt
+		$($MQTTPubPath) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")\"}"
 	fi
 }
 
@@ -197,6 +206,11 @@ while (true); do
 		#obtain individual address
 		currentDeviceAddress="${macaddress_owners[$index]}"
 
+		#check for additional blank lines in address file
+		if [ -z "$currentDeviceAddress" ]; then 
+			continue;
+		fi
+
 		#mark beginning of scan operation
 		STARTSCAN=$(date +%s$N)
 
@@ -256,8 +270,7 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"
-
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"\
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
 
