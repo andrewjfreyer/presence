@@ -123,7 +123,7 @@ network={
 nmap 192.168.1.0/24 -p 22
 ```
 
-<h2>Configuration and Setup of Raspberry Pi Zero Z</h2>
+<h2>Configuration and Setup of Raspberry Pi Zero W</h2>
 
 1. SSH into the Raspberry Pi (password: raspberry):
 ```

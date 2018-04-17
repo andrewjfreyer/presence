@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 Version=0.3.4
-Base="/home/andrewjfreyer/presence"
+Base="/home/pi/presence"
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
