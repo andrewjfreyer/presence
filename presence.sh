@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.63
+Version=0.3.64
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
