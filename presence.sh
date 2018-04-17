@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.64
+Version=0.3.65
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -130,7 +130,7 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		distance_approx=$(convertTimeToDistance $4 $2)
+		distance_approx=$(convertTimeToDistance $4)
 		name="$3"
 
 		#if no name, return "unknown"
@@ -160,7 +160,7 @@ function convertTimeToDistance () {
 
 	#ALPHA ALPHA
 
-	if [ ! -z "$1" ] && [ "$2" != "0" ]; then 
+	if [ ! -z "$1" ] then 
 		if [ "$1" -lt 500 ]; then 
 			echo "very close"
 		elif [ "$1" -lt 1000 ]; then 
@@ -173,7 +173,7 @@ function convertTimeToDistance () {
 			echo "very distant"
 		fi 
 	else
-		echo "infinite"
+		echo "undefinable"
 	fi
 }
 
@@ -229,7 +229,7 @@ while (true); do
 		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 		#echo to stderr for debug and testing
-		(>&2 echo "Duration: $SCAN_DURATION ms")
+		#(>&2 echo "Duration: $SCAN_DURATION ms")
 
 		#this device name is present
 		if [ "$nameScanResult" != "" ]; then
@@ -272,7 +272,7 @@ while (true); do
 				#calculate difference
 				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
-				(>&2 echo "Duration: $SCAN_DURATION ms")
+				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
