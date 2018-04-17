@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.63
+Version=0.3.64
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -141,10 +141,8 @@ function publish () {
 		#timestamp
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
-		(>&2 echo "$MQTTPubPath {\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$stamp\"}")
-
 		#post to mqtt
-		$("$MQTTPubPath") -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\",\"distance\":\"$distance_approx\",\"timestamp\":\"$stamp\"}"
+		$("$MQTTPubPath") -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\",\"distance\":\"$distance_approx\"}"
 	fi
 }
 
