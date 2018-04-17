@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.62
+Version=0.3.63
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -162,7 +162,7 @@ function convertTimeToDistance () {
 
 	#ALPHA ALPHA
 
-	if [ ! -z "$1" ] && [ ! "$2" == "0" ]; then 
+	if [ ! -z "$1" ] && [ "$2" != "0" ]; then 
 		if [ "$1" -lt 500 ]; then 
 			echo "Very Close"
 		elif [ "$1" -lt 1000 ]; then 
