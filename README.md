@@ -21,7 +21,9 @@ Messages are JSON formatted and contain only **name** and **confidence** fields:
      { name : "Andrew's iPhone", confidence : 100}
      { name : "", confidence : 0}
 
-<h1>Use with Home Assistant</h1>
+___
+
+<h1>Example Use with Home Assistant</h1>
 
 The presence script can be used as an [mqtt sensor](https://www.home-assistant.io/components/sensor.mqtt/) in [Home Assistant.](https://www.home-assistant.io). In order to detect presence in a home that has three floors and a garage, we might inclue one Raspberry Pi per floor. For average houses, a single well-placed sensor can probably work, but for more reliability at the edges of the house, more sensors are better. 
 
@@ -82,7 +84,9 @@ As an example:
       data:
         entity_id: input_boolean.andrew_occupancy
 ```
+
 ___
+
 
 <h1>Installation Instructions (Raspbian Jessie Lite Stretch):</h1>
 
