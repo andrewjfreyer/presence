@@ -160,7 +160,7 @@ function convertTimeToDistance () {
 
 	#ALPHA ALPHA
 
-	if [ ! -z "$1" ] then 
+	if [ ! -z "$1" ]; then 
 		if [ "$1" -lt 500 ]; then 
 			echo "very close"
 		elif [ "$1" -lt 1000 ]; then 
