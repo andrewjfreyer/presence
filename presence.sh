@@ -13,11 +13,13 @@
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
-# INCLUDES
+# INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.4
-Base="/home/pi/presence"
+Version=0.3.5
+
+#base directory regardless of installation
+Base=$(dirname "$(readlink -f "$0")")
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -115,7 +117,8 @@ function scanForGuests () {
 
 function scan () {
 	if [ ! -z "$1" ]; then 
-		echo $(hcitool name "$1" 2>&1 | grep -v 'not available')
+		result=$(hcitool name "$1" 2>&1 | grep -v 'not available')
+		echo "$result" 
 	fi
 }
 
@@ -126,10 +129,40 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		#echo "$1 {'confidence':'$2','name':'$3'}"
-		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\"}"
+		distance_approx=$(convertTimeToDistance($4))
+		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\"}"
 	fi
 }
+
+# ----------------------------------------------------------------------------------------
+# Translate ms scan times into distance approximation
+# ----------------------------------------------------------------------------------------
+
+function convertTimeToDistance () {
+	#very early ALPHA testing of distance measurement
+	#these numbers can/should be adjusted based on environmental conditions
+
+	#the thought process is that the speed with which a name query is completed
+	#can be used as a proxy for the signal quality between a source and a remote
+	#device. The signal quality might be able to be used as a proxy for distance. 
+
+	#ALPHA ALPHA
+
+	if [ ! -z "$1" ]; then 
+		if [ $1 -lt 500 ]; then 
+			echo "Very Close"
+		elif [ $1 -lt 1000 ]; then 
+			echo "Nearby"
+		elif [ $1 -lt 1500 ]; then 
+			echo "Far"
+		elif [ $1 -lt 2000 ]; then 
+			echo "Distant"
+		elif [ $1 -gt 2000 ]; then 
+			echo "Very Distant"
+		fi 
+	fi
+}
+
 
 # ----------------------------------------------------------------------------------------
 # Preliminary Notifications
@@ -164,14 +197,26 @@ while (true); do
 		#obtain individual address
 		currentDeviceAddress="${macaddress_owners[$index]}"
 
+		#mark beginning of scan operation
+		STARTSCAN=$(date +%s$N)
+
 		#obtain results and append each to the same
 		nameScanResult=$(scan $currentDeviceAddress)
 		
+		#mark end of scan operation
+		ENDSCAN=$(date +%s$N)
+		
+		#calculate difference
+		SCAN_DURATION_MILISECONDS=$(( (ENDSCAN - STARTSCAN)/1000000 )) 
+
+		#echo to stderr for debug and testing
+		(>&2 echo "Duration: $DIFFERENCE ns")
+
 		#this device name is present
 		if [ "$nameScanResult" != "" ]; then
 
 			#no duplicate messages
-			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult"
+			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION_MILISECONDS"
 
 			#user status			
 			deviceStatusArray[$index]="100"
@@ -196,13 +241,22 @@ while (true); do
 				#get percentage
 				percentage=$(($status * ( $verifyByRepeatedlyQuerying - $repetition) / $verifyByRepeatedlyQuerying))
 
+				#mark beginning of scan operation
+				STARTSCAN=$(date +%s$N)
+
 				#perform scan
 				nameScanResultRepeat=$(scan $currentDeviceAddress)
+
+				#mark end of scan operation
+				ENDSCAN=$(date +%s$N)
+				
+				#calculate difference
+				SCAN_DURATION_MILISECONDS=$(( (ENDSCAN - STARTSCAN)/1000000 )) 
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult"
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION_MILISECONDS"
 
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResult"
@@ -216,7 +270,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName"
+				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION_MILISECONDS"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
