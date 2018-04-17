@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.5
+Version=0.3.6
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -129,7 +129,7 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		distance_approx=$(convertTimeToDistance $4)
+		distance_approx=$(convertTimeToDistance $4 $2)
 		$(which mosquitto_pub) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\"}"
 	fi
 }
@@ -148,7 +148,7 @@ function convertTimeToDistance () {
 
 	#ALPHA ALPHA
 
-	if [ ! -z "$1" ]; then 
+	if [ ! -z "$1" ] && [ $2 -gt 0 ]; then 
 		if [ $1 -lt 500 ]; then 
 			echo "Very Close"
 		elif [ $1 -lt 1000 ]; then 
