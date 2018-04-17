@@ -217,16 +217,16 @@ while (true); do
 		fi
 
 		#mark beginning of scan operation
-		STARTSCAN=$(date +%s$N)
+		STARTSCAN=$(date +%s%N)
 
 		#obtain results and append each to the same
 		nameScanResult=$(scan $currentDeviceAddress)
 		
 		#mark end of scan operation
-		ENDSCAN=$(date +%s$N)
+		ENDSCAN=$(date +%s%N)
 		
 		#calculate difference
-		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
+		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 		#echo to stderr for debug and testing
 		(>&2 echo "Duration: $DIFFERENCE ns")
@@ -261,16 +261,16 @@ while (true); do
 				percentage=$(($status * ( $verifyByRepeatedlyQuerying - $repetition) / $verifyByRepeatedlyQuerying))
 
 				#mark beginning of scan operation
-				STARTSCAN=$(date +%s$N)
+				STARTSCAN=$(date +%s%N)
 
 				#perform scan
 				nameScanResultRepeat=$(scan $currentDeviceAddress)
 
 				#mark end of scan operation
-				ENDSCAN=$(date +%s$N)
+				ENDSCAN=$(date +%s%N)
 				
 				#calculate difference
-				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
+				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
