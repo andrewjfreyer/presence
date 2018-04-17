@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.60
+Version=0.3.61
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -138,8 +138,13 @@ function publish () {
 			name="Unknown"
 		fi 
 
+		#timestamp
+		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
+
+		(>&2 echo "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$stamp\"}")
+
 		#post to mqtt
-		$($MQTTPubPath) -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")\"}"
+		$("$MQTTPubPath") -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\", \"distance\" : \"$distance_approx\", \"timestamp\":\"$stamp\"}"
 	fi
 }
 
@@ -157,16 +162,16 @@ function convertTimeToDistance () {
 
 	#ALPHA ALPHA
 
-	if [ ! -z "$1" ] && [ $2 -gt 0 ]; then 
-		if [ $1 -lt 500 ]; then 
+	if [ ! -z "$1" ] && [ ! "$2" == "0" ]; then 
+		if [ "$1" -lt 500 ]; then 
 			echo "Very Close"
-		elif [ $1 -lt 1000 ]; then 
+		elif [ "$1" -lt 1000 ]; then 
 			echo "Nearby"
-		elif [ $1 -lt 1500 ]; then 
+		elif [ "$1" -lt 1500 ]; then 
 			echo "Far"
-		elif [ $1 -lt 2000 ]; then 
+		elif [ "$1" -lt 2000 ]; then 
 			echo "Distant"
-		elif [ $1 -gt 2000 ]; then 
+		elif [ "$1" -gt 2000 ]; then 
 			echo "Very Distant"
 		fi 
 	fi
