@@ -176,7 +176,7 @@ while (true); do
 	do
 		#clear per-loop variables
 		nameScanResult=""
-		
+
 		#obtain individual address
 		currentDeviceAddress="${macaddress_owners[$index]}"
 
@@ -195,7 +195,7 @@ while (true); do
 		ENDSCAN=$(date +%s%N)
 		
 		#calculate difference
-		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
+		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 		#echo to stderr for debug and testing
 		#(>&2 echo "Duration: $SCAN_DURATION ms")
@@ -239,7 +239,7 @@ while (true); do
 				ENDSCAN=$(date +%s%N)
 				
 				#calculate difference
-				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
+				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
 				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
