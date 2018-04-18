@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.67
+Version=0.3.68
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -246,7 +246,7 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"\
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
 					deviceStatusArray[$index]="100"
 					deviceNameArray[$index]="$nameScanResultRepeat"
 
@@ -259,7 +259,7 @@ while (true); do
 				expectedName="${deviceNameArray[$index]}"
 
 				#report confidence drop
-				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION_MILISECONDS"
+				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION"
 
 				#set to percentage
 				deviceStatusArray[$index]="$percentage"
