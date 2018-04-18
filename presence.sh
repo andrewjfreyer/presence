@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.66
+Version=0.3.67
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -130,7 +130,8 @@ function scan () {
 
 function publish () {
 	if [ ! -z "$1" ]; then 
-		distance_approx=$(convertTimeToDistance $4)
+
+		#set name for 'unkonwn'
 		name="$3"
 
 		#if no name, return "unknown"
@@ -142,41 +143,9 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#post to mqtt
-		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$3\",\"distance\":\"$distance_approx\",\"timestamp\":\"$stamp\"}"
+		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$$4\",\"timestamp\":\"$stamp\"}"
 	fi
 }
-
-# ----------------------------------------------------------------------------------------
-# Translate ms scan times into distance approximation
-# ----------------------------------------------------------------------------------------
-
-function convertTimeToDistance () {
-	#very early ALPHA testing of distance measurement
-	#these numbers can/should be adjusted based on environmental conditions
-
-	#the thought process is that the speed with which a name query is completed
-	#can be used as a proxy for the signal quality between a source and a remote
-	#device. The signal quality might be able to be used as a proxy for distance. 
-
-	#ALPHA ALPHA
-
-	if [ ! -z "$1" ]; then 
-		if [ "$1" -lt 500 ]; then 
-			echo "very close"
-		elif [ "$1" -lt 1000 ]; then 
-			echo "nearby"
-		elif [ "$1" -lt 1500 ]; then 
-			echo "far"
-		elif [ "$1" -lt 2000 ]; then 
-			echo "distant"
-		elif [ "$1" -gt 2000 ]; then 
-			echo "very distant"
-		fi 
-	else
-		echo "undefinable"
-	fi
-}
-
 
 # ----------------------------------------------------------------------------------------
 # Preliminary Notifications
@@ -277,9 +246,9 @@ while (true); do
 				#checkstan
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"\
+					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"\
 					deviceStatusArray[$index]="100"
-					deviceNameArray[$index]="$nameScanResult"
+					deviceNameArray[$index]="$nameScanResultRepeat"
 
 					scanForGuests $delayBetweenOwnerScansWhenPresent
 					break
