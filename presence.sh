@@ -16,7 +16,7 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.3.68
+Version=0.3.69
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -143,7 +143,7 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#post to mqtt
-		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$$4\",\"timestamp\":\"$stamp\"}"
+		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
 	fi
 }
 
@@ -174,15 +174,15 @@ while (true); do
 	#--------------------------------------
 	for index in "${!macaddress_owners[@]}"
 	do
-		#cache bluetooth results 
+		#clear per-loop variables
 		nameScanResult=""
-
+		
 		#obtain individual address
 		currentDeviceAddress="${macaddress_owners[$index]}"
 
 		#check for additional blank lines in address file
 		if [ -z "$currentDeviceAddress" ]; then 
-			continue;
+			continue
 		fi
 
 		#mark beginning of scan operation
@@ -195,7 +195,7 @@ while (true); do
 		ENDSCAN=$(date +%s%N)
 		
 		#calculate difference
-		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+		SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
 
 		#echo to stderr for debug and testing
 		#(>&2 echo "Duration: $SCAN_DURATION ms")
@@ -239,7 +239,7 @@ while (true); do
 				ENDSCAN=$(date +%s%N)
 				
 				#calculate difference
-				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+				SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000 )) 
 
 				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
