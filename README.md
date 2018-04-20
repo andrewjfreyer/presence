@@ -154,6 +154,9 @@ sudo apt-get --purge remove bluez
 cd ~; wget https://www.kernel.org/pub/linux/bluetooth/bluez-XX.XX.tar.xz
 tar xvf bluez-X.XX.tar.xz
 
+#update errythang again
+sudo apt-get update
+
 #install necessary packages
 sudo apt-get install libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev
 

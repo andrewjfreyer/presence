@@ -1,4 +1,5 @@
 delayBetweenOwnerScansWhenAway=7
-delayBetweenOwnerScansWhenPresent=30
-delayBetweenGuestScans=5	
+delayBetweenOwnerScansWhenPresent=20
 verifyByRepeatedlyQuerying=5 	
+beaconScanInterval=3
+beaconScanEnabled=0
