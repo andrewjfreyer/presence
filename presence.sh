@@ -16,7 +16,12 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-Version=0.4.01
+#version number
+Version=0.4.03
+
+#startup message
+echo -e "${GREEN}presence $Version ${NC} - Started"
+
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -25,6 +30,7 @@ MQTTPubPath=$(which mosquitto_pub)
 #color output 
 RED='\033[0;31m'
 NC='\033[0m'
+GREEN='\033[0;32m'
 
 #load preferences if present
 MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
@@ -34,10 +40,91 @@ MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 # ----------------------------------------------------------------------------------------
 
 #or load from a source file
-DELAY_CONFIG=$Base/behavior_preferences ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
+if [ -f "$Base/behavior_preferences" ]; then 
+	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:"
+	echo -e "/behavior_preferences. Creating file and setting default values."
+  	echo -e "" 
+
+  	#default values
+  	echo "nameScanTimeout=3"						> "$Base/behavior_preferences"
+  	echo "delayBetweenOwnerScansWhenAway=8" 		> "$Base/behavior_preferences"
+	echo "delayBetweenOwnerScansWhenPresent=45"		> "$Base/behavior_preferences"
+	echo "verifyByRepeatedlyQuerying=7"				> "$Base/behavior_preferences"
+	echo "verificationLoopDelay=3"					> "$Base/behavior_preferences"
+	echo "beaconScanInterval=5"						> "$Base/behavior_preferences"
+	echo "beaconScanEnabled=0"						> "$Base/behavior_preferences"
+
+fi  
+
+#set preferences from file
+DELAY_CONFIG="$Base/behavior_preferences" ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
 
 #current guest
 currentGuestIndex=0
+
+# ----------------------------------------------------------------------------------------
+# ERROR CHECKING FOR BEHAVIOR PREFERENCES 
+# ----------------------------------------------------------------------------------------
+
+#name scan timeout
+if [ "$nameScanTimeout" -lt 2]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Name scan timeout is relatively low. New bluetooth "
+	echo -e "devices may take more time than this to be discovered."
+fi 
+
+#name scan timeout
+if [ "$nameScanTimeout" -gt 5]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Name scan timeout is relatively high. Built-in"
+	echo -e "timeout, by default, is around five seconds."
+fi 
+
+#owner scans when away
+if [ "$delayBetweenOwnerScansWhenAway" -lt 5]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Delay between owner scans when away is relatively"
+	echo -e "low. This may slow down the server because the BT hardware"
+	echo -e "will be actively scanning more frequently. Consider increasing"
+	echo -e "this value. The greater this value, the more time it will take"
+	echo -e "to recognize when a device has arrived."
+fi 
+
+#owner scans when present
+if [ "$delayBetweenOwnerScansWhenPresent" -lt 20]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Delay between owner scans when present is relatively"
+	echo -e "low. This may slow down the server because the BT hardware"
+	echo -e "will be actively scanning more frequently. Consider increasing"
+	echo -e "this value. The greater this value, the more time it will take"
+	echo -e "to recognize that a devices has left."
+fi 
+
+#verification loop size
+if [ "$verifyByRepeatedlyQuerying" -lt 5]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
+	echo -e "low. This can increase the risk of false exit events."
+	echo -e "The greater this value, the lower the probability of false exit events."
+fi 
+
+#verification loop delay
+if [ "$verificationLoopDelay" -lt 2]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Verification loop delay is relatively short or"
+	echo -e "low. This can increase the risk of false exit events."
+	echo -e "The greater this value, the lower the probability of "
+	echo -e "false exit events."
+fi 
+
+#beacons
+if [ "$beaconScanInterval" -lt 5] && [ "$beaconScanEnabled" == 1 ]; then 
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${NC}Beacon scan interval is relatively low. This reduces the changes"
+	echo -e "that a beacon will be broadcasting when this script is listening."
+	echo -e "The greater this value, the greater the liklihood that a present beacon"
+	echo -e "will be recognized."
+fi 
 
 # ----------------------------------------------------------------------------------------
 # SCAN FOR GUEST DEVICES DURING OWNER DEVICE TIMEOUTS
@@ -79,8 +166,6 @@ function scanForGuests () {
 
 			#obtain individual address
 			currentGuestDeviceAddress="${macaddress_guests[$currentGuestIndex]}"
-
-			(>&2 echo "Delay: $currentGuestDeviceAddress")
 
 			#check if we've already scanned this device recently
 			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
@@ -145,8 +230,11 @@ function scanForGuests () {
 		sleep $MAX_DELAY
 
 	else
+		#error corrections; need to have minimum delay
+		MAX_DELAY=$(( delayToImplement > 0 ? delayToImplement : 5))
+
 		#default sleep; no guest devices
-		sleep $1
+		sleep $MAX_DELAY
     fi
 }
 
@@ -167,7 +255,7 @@ function arrayContainsElement () {
 
 function scan () {
 	if [ ! -z "$1" ]; then 
-		result=$(hcitool name "$1" 2>&1 | grep -v 'not available')
+		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available')
 		echo "$result" 
 	fi
 }
@@ -192,7 +280,9 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#debugging 
-		(>&2 echo "Message: $1 $2 $3 $4 $stamp")
+		(>&2 echo "MQTT Topic: $mqtt_topicpath$1")
+		(>&2 echo "MQTT Message: $1 $2 $3 $4 $stamp")
+
 		#post to mqtt
 		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
 	fi
@@ -202,7 +292,7 @@ function publish () {
 # Preliminary Notifications
 # ----------------------------------------------------------------------------------------
 
-#Fill Address Array]
+#Fill Address Array with support for comments
 macaddress_guests=($(cat "$Base/guest_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
 macaddress_owners=($(cat "$Base/owner_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
 
@@ -214,7 +304,7 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 # Main Loop
 # ----------------------------------------------------------------------------------------
 
-beaconArray=()			#stores idenfiers that record which macs are associated with beacons
+beaconDeviceArray=()	#stores idenfiers that record which macs are associated with beacons
 deviceStatusArray=()	#stores status for each bluetooth devices
 deviceNameArray=()		#stores device names for both beacons and bluetooth devices
 
@@ -225,7 +315,7 @@ deviceNameArray=()		#stores device names for both beacons and bluetooth devices
 IS_ROOT=1
 
 if [[ $EUID -ne 0 ]] && [ "$beaconScanEnabled" == 1 ] ; then
-  	echo -e "${RED}WARNING: ${NC}Beacon detection requires root; man hcitool for detail."
+  	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Beacon detection requires root; man hcitool for detail."
   	echo -e "Any BTLE Beacon MAC addresses in the 'owner_devices' configuration" 
   	echo -e "file will be treated as standard bluetooth devices and will likely"
   	echo -e "always return a confidence of 0. Performance may be degraded for "
@@ -246,12 +336,14 @@ while true; do
 
 		#check interface health, restore if necessary
 		if [ "$BEACONS_RAW" == "Set scan parameters failed: Input/output error" ];then
-			echo -e "${RED}WARNING: ${NC}Bluetooth interface went down. Restoring now."
+			echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Bluetooth interface went down. Restoring now..."
 			sudo hciconfig hci0 down
+			sleep 1
 			sudo hciconfig hci0 up
 		fi
-
 	else
+
+		#if we do not have beacon detection enabled, set the array to blank
 		BEACONS_NOW=""
 	fi 
 
@@ -277,6 +369,8 @@ while true; do
 		#test if current device was found on a beacon scan
 
 		if [ "$IS_BEACON" == 0 ]; then  
+			### NON BEACON ###
+
 			#mark beginning of scan operation
 			STARTSCAN=$(date +%s%N)
 
@@ -289,6 +383,7 @@ while true; do
 			#calculate difference
 			SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 		else
+			### BEACON ###
 
 			#set the name as the device addres
 			nameScanResult="$currentDeviceAddress"
@@ -297,7 +392,7 @@ while true; do
 			SCAN_DURATION="$((beaconScanInterval * 1000))"
 
 			#set beacon array so that we can ignore if beacon leaves
-			beaconArray[$index]=1
+			beaconDeviceArray[$index]=1
 
 		fi 
 		#echo to stderr for debug and testing
@@ -318,7 +413,7 @@ while true; do
 		else
 
 			#Handle beacons first
-			was_beacon="${beaconArray[$index]}"
+			was_beacon="${beaconDeviceArray[$index]}"
 
 			#if this was previously marked as a beacon, skip name scanning
 			if [ "$was_beacon" == '1' ]; then 
@@ -356,6 +451,8 @@ while true; do
 			#should verify absense
 			for repetition in $(seq 1 $repetitions); 
 			do 
+				#verification loop delay
+				sleep "$verificationLoopDelay"
 
 				#get percentage
 				percentage=$(($status * ( $repetitions - $repetition) / $repetitions))

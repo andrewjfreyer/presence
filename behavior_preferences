@@ -1,5 +1,0 @@
-delayBetweenOwnerScansWhenAway=7
-delayBetweenOwnerScansWhenPresent=20
-verifyByRepeatedlyQuerying=5 	
-beaconScanInterval=3
-beaconScanEnabled=0
