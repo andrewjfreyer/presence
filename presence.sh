@@ -244,17 +244,6 @@ function scanForGuests () {
 }
 
 # ----------------------------------------------------------------------------------------
-# Array Contains
-# ----------------------------------------------------------------------------------------
-
-function arrayContainsElement () {
-  local e match="$1"
-  shift
-  for e; do [[ "$e" == "$match" ]] && return 0; done
-  return 1
-}
-
-# ----------------------------------------------------------------------------------------
 # Scan script
 # ----------------------------------------------------------------------------------------
 
@@ -311,6 +300,7 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 beaconDeviceArray=()	#stores idenfiers that record which macs are associated with beacons
 deviceStatusArray=()	#stores status for each bluetooth devices
 deviceNameArray=()		#stores device names for both beacons and bluetooth devices
+oneDeviceHome=0
 
 # ----------------------------------------------------------------------------------------
 # Check user 
@@ -356,6 +346,9 @@ while true; do
 	#--------------------------------------
 	for index in "${!macaddress_owners[@]}"
 	do
+		#reset at least one device home
+		oneDeviceHome=0
+
 		#clear per-loop variables
 		nameScanResult=""
 
@@ -410,6 +403,9 @@ while true; do
 
 			#user status			
 			deviceStatusArray[$index]="100"
+
+			#set at least one device home
+			oneDeviceHome=1
 
 			#set name array
 			deviceNameArray[$index]="$nameScanResult"
@@ -489,6 +485,9 @@ while true; do
 
 					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
 
+					#set at least one device home
+					oneDeviceHome=1
+
 					#must break confidence scanning loop; 100' iscovered
 					break
 
@@ -507,12 +506,12 @@ while true; do
 	done
 
 	#check status array for any device marked as 'home'
-	if [ "$(arrayContainsElement "100" ${deviceStatusArray[@]})" == 0 ]; then 
+	if [ "$oneDeviceHome" == 1 ]; then 
 				#Print Delay for debugging
-		(>&2 echo "Scanning while at least one device is present.")
+		(>&2 echo "Scanning for $numberOfGuests guest devices between scans when at least one device is present.")
 		scanForGuests $delayBetweenOwnerScansWhenPresent
 	else
-		(>&2 echo "Scanning while no devies are present.")
+		(>&2 echo "Scanning for $numberOfGuests guest devices between scans when no owner device is present.")
 		scanForGuests $delayBetweenOwnerScansWhenAway
 	fi 
 done
