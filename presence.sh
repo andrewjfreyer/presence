@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.07
+Version=0.4.08
 
 #color output 
 ORANGE='\033[0;33m'
@@ -36,9 +36,6 @@ MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 # Set Program Variables
 # ----------------------------------------------------------------------------------------
 
-#startup message
-echo -e "${GREEN}presence $Version ${NC} - Started${NC}"
-
 #or load from a source file
 if [ ! -f "$Base/behavior_preferences" ]; then 
 	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:${NC}"
@@ -46,14 +43,13 @@ if [ ! -f "$Base/behavior_preferences" ]; then
   	echo -e "" 
 
   	#default values
-  	echo "nameScanTimeout=4"						>> "$Base/behavior_preferences"
+  	echo "nameScanTimeout=5"						>> "$Base/behavior_preferences"
   	echo "delayBetweenOwnerScansWhenAway=8" 		>> "$Base/behavior_preferences"
 	echo "delayBetweenOwnerScansWhenPresent=45"		>> "$Base/behavior_preferences"
 	echo "verifyByRepeatedlyQuerying=7"				>> "$Base/behavior_preferences"
-	echo "verificationLoopDelay=2"					>> "$Base/behavior_preferences"
+	echo "verificationLoopDelay=3"					>> "$Base/behavior_preferences"
 	echo "beaconScanInterval=5"						>> "$Base/behavior_preferences"
 	echo "beaconScanEnabled=0"						>> "$Base/behavior_preferences"
-
 fi  
 
 #set preferences from file
@@ -67,7 +63,7 @@ currentGuestIndex=0
 # ----------------------------------------------------------------------------------------
 
 #name scan timeout
-if [[ "$nameScanTimeout" -lt 2 ]]; then 
+if [[ "$nameScanTimeout" -lt 3 ]]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "Name scan timeout is relatively low at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). New bluetooth "
 	echo -e "devices may take more time than this to be discovered.${NC}"
@@ -77,7 +73,7 @@ fi
 if [[ "$nameScanTimeout" -gt 5 ]]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "Name scan timeout is relatively high at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). Built-in"
-	echo -e "timeout, by default, is around five seconds.${NC}"
+	echo -e "timeout, by default, is around five to six seconds.${NC}"
 fi 
 
 #owner scans when away
@@ -294,6 +290,25 @@ macaddress_owners=($(cat "$Base/owner_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-
 #Number of clients that are monitored
 numberOfOwners=$((${#macaddress_owners[@]}))
 numberOfGuests=$((${#macaddress_guests[@]}))
+
+
+
+# ----------------------------------------------------------------------------------------
+# Worst Case Estimations 
+# ----------------------------------------------------------------------------------------
+
+#startup message
+echo -e "${GREEN}presence $Version ${NC} - Started${NC}"
+
+echo -e "Performance predictions based on current settings:"
+#all owners at home 
+echo -e "  > Est. time for all owners recognized as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) +)) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) +)) seconds."
+
+#fuzz for one second per owner that is home, plus worst case 
+echo -e "  > Est. time to recognize one owner is 'away': $(( nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
+
+#0.5 seconds is experimenatally obtained on a raspberry pi
+echo -e "  > Est. time to recognize one owner is 'home': 0.5 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
