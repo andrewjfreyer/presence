@@ -24,7 +24,7 @@ ORANGE='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+PURPLE='\033[1;35m'
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -273,7 +273,7 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#debugging 
-		(>&2 echo -e "${YELLOW} $mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp} ${NC}")
+		(>&2 echo -e "${PURPLE}$mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp} ${NC}")
 
 		#post to mqtt
 		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
