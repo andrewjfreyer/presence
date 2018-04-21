@@ -24,6 +24,7 @@ ORANGE='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 
 #base directory regardless of installation
 Base=$(dirname "$(readlink -f "$0")")
@@ -272,7 +273,7 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#debugging 
-		(>&2 echo "$mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp}")
+		(>&2 echo -e "${YELLOW} $mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp} ${NC}")
 
 		#post to mqtt
 		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
@@ -298,13 +299,13 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 #startup message
 echo -e "${GREEN}presence $Version ${NC} - Started. Performance predictions based on current settings:"
 #all owners at home 
-echo -e "  > Est. time to recognize all ($numberOfOwners) owners as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
+echo -e "  > Est. to recognize all ($numberOfOwners) owners as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
 
 #fuzz for one second per owner that is home, plus worst case 
-echo -e "  > Est. time to recognize one owner is 'away': $(( nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
+echo -e "  > Est. to recognize one owner is 'away': $(( nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
 
 #0.15 seconds is experimenatally obtained on a raspberry pi
-echo -e "  > Est. time to recognize one owner is 'home': 0.15 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
+echo -e "  > Est. to recognize one owner is 'home': 0.15 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
