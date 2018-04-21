@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.06
+Version=0.4.07
 
 #color output 
 ORANGE='\033[0;33m'
@@ -50,7 +50,7 @@ if [ ! -f "$Base/behavior_preferences" ]; then
   	echo "delayBetweenOwnerScansWhenAway=8" 		>> "$Base/behavior_preferences"
 	echo "delayBetweenOwnerScansWhenPresent=45"		>> "$Base/behavior_preferences"
 	echo "verifyByRepeatedlyQuerying=7"				>> "$Base/behavior_preferences"
-	echo "verificationLoopDelay=3"					>> "$Base/behavior_preferences"
+	echo "verificationLoopDelay=2"					>> "$Base/behavior_preferences"
 	echo "beaconScanInterval=5"						>> "$Base/behavior_preferences"
 	echo "beaconScanEnabled=0"						>> "$Base/behavior_preferences"
 
@@ -68,62 +68,62 @@ currentGuestIndex=0
 
 #name scan timeout
 if [[ "$nameScanTimeout" -lt 2 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Name scan timeout is relatively low at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). New bluetooth "
-	echo -e "devices may take more time than this to be discovered."
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Name scan timeout is relatively low at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). New bluetooth "
+	echo -e "devices may take more time than this to be discovered.${NC}"
 fi 
 
 #name scan timeout
 if [[ "$nameScanTimeout" -gt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Name scan timeout is relatively high at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). Built-in"
-	echo -e "timeout, by default, is around five seconds."
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Name scan timeout is relatively high at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). Built-in"
+	echo -e "timeout, by default, is around five seconds.${NC}"
 fi 
 
 #owner scans when away
 if [[ "$delayBetweenOwnerScansWhenAway" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Delay between owner scans when away is relatively"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:$"
+	echo -e "Delay between owner scans when away is relatively"
 	echo -e "low at $(( delayBetweenOwnerScansWhenAway > 0 ? delayBetweenOwnerScansWhenAway : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
 	echo -e "this value. The greater this value, the more time it will take"
-	echo -e "to recognize when a device has arrived."
+	echo -e "to recognize when a device has arrived.${NC}"
 fi 
 
 #owner scans when present
 if [[ "$delayBetweenOwnerScansWhenPresent" -lt 20 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Delay between owner scans when present is relatively"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Delay between owner scans when present is relatively"
 	echo -e "low at $(( delayBetweenOwnerScansWhenPresent > 0 ? delayBetweenOwnerScansWhenPresent : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
 	echo -e "this value. The greater this value, the more time it will take"
-	echo -e "to recognize that a devices has left."
+	echo -e "to recognize that a devices has left.${NC}"
 fi 
 
 #verification loop size
 if [[ "$verifyByRepeatedlyQuerying" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
 	echo -e "low at $(( verifyByRepeatedlyQuerying > 0 ? verifyByRepeatedlyQuerying : 0)). This can increase the risk of false exit events."
-	echo -e "The greater this value, the lower the probability of false exit events."
+	echo -e "The greater this value, the lower the probability of false exit events.${NC}"
 fi 
 
 #verification loop delay
 if [[ "$verificationLoopDelay" -lt 2 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Verification loop delay is relatively short or"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Verification loop delay is relatively short or"
 	echo -e "low at $verificationLoopDelay. This can increase the risk of false exit events."
 	echo -e "The greater this value, the lower the probability of "
-	echo -e "false exit events."
+	echo -e "false exit events.${NC}"
 fi 
 
 #beacons
 if [[ "$beaconScanInterval" -lt 5 ]] && [[ "$beaconScanEnabled" == 1 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
-	echo -e "${NC}Beacon scan interval is relatively low at $(( beaconScanInterval > 0 ? beaconScanInterval : 0)). This reduces the changes"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "Beacon scan interval is relatively low at $(( beaconScanInterval > 0 ? beaconScanInterval : 0)). This reduces the changes"
 	echo -e "that a beacon will be broadcasting when this script is listening."
 	echo -e "The greater this value, the greater the liklihood that a present beacon"
-	echo -e "will be recognized."
+	echo -e "will be recognized.${NC}"
 fi 
 
 # ----------------------------------------------------------------------------------------

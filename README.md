@@ -16,10 +16,10 @@ Topics are formatted like this:
      location/owner/pi_zero_location/00:00:00:00:00:00 
      location/guest/pi_zero_location/00:00:00:00:00:00
 
-Messages are JSON formatted and contain only **name** and **confidence** fields:
+Messages are JSON formatted and contain **name** and **confidence** fields, including a javascript-formatted timestamp and a duration of a particular scan (in ms):
 
-     { name : "Andrew's iPhone", confidence : 100}
-     { name : "", confidence : 0}
+     { confidence : 100, name : Andrew’s iPhone, scan_duration_ms: 500, timestamp : Sat Apr 21 2018 11:52:04 GMT-0600 (MDT)}
+     { confidence : 0, name : Andrew’s iPhone, scan_duration_ms: 5000, timestamp : Sat Apr 21 2018 11:52:04 GMT-0600 (MDT)}
 
 ___
 
