@@ -299,10 +299,10 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 #startup message
 echo -e "${GREEN}presence $Version ${NC} - Started. Performance predictions based on current settings:"
 #all owners at home 
-echo -e "  > Est. to recognize all ($numberOfOwners) owners as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
+echo -e "  > Est. to recognize all ($numberOfOwners) owners as 'away' from 'home': $(( numberOfOwners * (nameScanTimeout * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying) + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
 
 #fuzz for one second per owner that is home, plus worst case 
-echo -e "  > Est. to recognize one owner is 'away': $(( nameScanTimeout * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
+echo -e "  > Est. to recognize one owner is 'away', while another stays 'home': $(( nameScanTimeout * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
 
 #0.15 seconds is experimenatally obtained on a raspberry pi
 echo -e "  > Est. to recognize one owner is 'home': 0.15 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
