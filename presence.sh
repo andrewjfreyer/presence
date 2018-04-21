@@ -227,7 +227,7 @@ function scanForGuests () {
 		MAX_DELAY=$(( MAX_DELAY > 0 ? MAX_DELAY : 0 ))
 
 		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE} DEBUG ${NC} Appropriate Delay: $MAX_DELAY")
+		(>&2 echo -e "${ORANGE} DEBUG Appropriate Delay: $MAX_DELAY")
 
 		#sleep the maximum delay 
 		sleep $MAX_DELAY
@@ -237,7 +237,7 @@ function scanForGuests () {
 		MAX_DELAY=$(( delayToImplement > 0 ? delayToImplement : 5))
 
 		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE} DEBUG ${NC} Appropriate Delay: $MAX_DELAY")
+		(>&2 echo -e "${ORANGE} DEBUG Appropriate Delay: $MAX_DELAY")
 
 		#default sleep; no guest devices
 		sleep $MAX_DELAY
@@ -509,10 +509,10 @@ while true; do
 	#check status array for any device marked as 'home'
 	if [ "$oneDeviceHome" == 1 ]; then 
 				#Print Delay for debugging
-		(>&2 echo -e "${ORANGE}DEBUG ${NC} Scanning for $numberOfGuests guest devices between owner scans when at least one device is present.")
+		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans when at least one device is present.")
 		scanForGuests $delayBetweenOwnerScansWhenPresent
 	else
-		(>&2 echo "${ORANGE}DEBUG ${NC} Scanning for $numberOfGuests guest devices between scans when no owner device is present.")
+		(>&2 echo "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between scans when no owner device is present.")
 		scanForGuests $delayBetweenOwnerScansWhenAway
 	fi 
 done
