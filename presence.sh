@@ -67,21 +67,21 @@ currentGuestIndex=0
 # ----------------------------------------------------------------------------------------
 
 #name scan timeout
-if [ "$nameScanTimeout" -lt 2]; then 
+if [ "$nameScanTimeout" -lt 2 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Name scan timeout is relatively low. New bluetooth "
 	echo -e "devices may take more time than this to be discovered."
 fi 
 
 #name scan timeout
-if [ "$nameScanTimeout" -gt 5]; then 
+if [ "$nameScanTimeout" -gt 5 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Name scan timeout is relatively high. Built-in"
 	echo -e "timeout, by default, is around five seconds."
 fi 
 
 #owner scans when away
-if [ "$delayBetweenOwnerScansWhenAway" -lt 5]; then 
+if [ "$delayBetweenOwnerScansWhenAway" -lt 5 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Delay between owner scans when away is relatively"
 	echo -e "low. This may slow down the server because the BT hardware"
@@ -91,7 +91,7 @@ if [ "$delayBetweenOwnerScansWhenAway" -lt 5]; then
 fi 
 
 #owner scans when present
-if [ "$delayBetweenOwnerScansWhenPresent" -lt 20]; then 
+if [ "$delayBetweenOwnerScansWhenPresent" -lt 20 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Delay between owner scans when present is relatively"
 	echo -e "low. This may slow down the server because the BT hardware"
@@ -101,7 +101,7 @@ if [ "$delayBetweenOwnerScansWhenPresent" -lt 20]; then
 fi 
 
 #verification loop size
-if [ "$verifyByRepeatedlyQuerying" -lt 5]; then 
+if [ "$verifyByRepeatedlyQuerying" -lt 5 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
 	echo -e "low. This can increase the risk of false exit events."
@@ -118,7 +118,7 @@ if [ "$verificationLoopDelay" -lt 2]; then
 fi 
 
 #beacons
-if [ "$beaconScanInterval" -lt 5] && [ "$beaconScanEnabled" == 1 ]; then 
+if [ "$beaconScanInterval" -lt 5 ] && [ "$beaconScanEnabled" == 1 ]; then 
 	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
 	echo -e "${NC}Beacon scan interval is relatively low. This reduces the changes"
 	echo -e "that a beacon will be broadcasting when this script is listening."
