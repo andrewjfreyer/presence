@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.08
+Version=0.4.09
 
 #color output 
 ORANGE='\033[0;33m'
@@ -44,9 +44,9 @@ if [ ! -f "$Base/behavior_preferences" ]; then
 
   	#default values
   	echo "nameScanTimeout=5"						>> "$Base/behavior_preferences"
-  	echo "delayBetweenOwnerScansWhenAway=8" 		>> "$Base/behavior_preferences"
-	echo "delayBetweenOwnerScansWhenPresent=45"		>> "$Base/behavior_preferences"
-	echo "verifyByRepeatedlyQuerying=7"				>> "$Base/behavior_preferences"
+  	echo "delayBetweenOwnerScansWhenAway=6" 		>> "$Base/behavior_preferences"
+	echo "delayBetweenOwnerScansWhenPresent=30"		>> "$Base/behavior_preferences"
+	echo "verifyByRepeatedlyQuerying=6"				>> "$Base/behavior_preferences"
 	echo "verificationLoopDelay=3"					>> "$Base/behavior_preferences"
 	echo "beaconScanInterval=5"						>> "$Base/behavior_preferences"
 	echo "beaconScanEnabled=0"						>> "$Base/behavior_preferences"
@@ -247,7 +247,7 @@ function scanForGuests () {
 function scan () {
 	if [ ! -z "$1" ]; then 
 		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available')
-		(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
+		#(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
 		echo "$result" 
 	fi
 }
@@ -303,8 +303,8 @@ echo -e "  > Est. time to recognize all ($numberOfOwners) owners as 'away' from 
 #fuzz for one second per owner that is home, plus worst case 
 echo -e "  > Est. time to recognize one owner is 'away': $(( nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
 
-#0.5 seconds is experimenatally obtained on a raspberry pi
-echo -e "  > Est. time to recognize one owner is 'home': 0.5 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
+#0.15 seconds is experimenatally obtained on a raspberry pi
+echo -e "  > Est. time to recognize one owner is 'home': 0.15 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
 
 # ----------------------------------------------------------------------------------------
 # Main Loop
