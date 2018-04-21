@@ -225,12 +225,18 @@ function scanForGuests () {
 		#less than zero? 
 		MAX_DELAY=$(( MAX_DELAY > 0 ? MAX_DELAY : 0 ))
 
+		#Print Delay for debugging
+		(>&2 echo "Delay: $MAX_DELAY")
+
 		#sleep the maximum delay 
 		sleep $MAX_DELAY
 
 	else
 		#error corrections; need to have minimum delay
 		MAX_DELAY=$(( delayToImplement > 0 ? delayToImplement : 5))
+
+		#Print Delay for debugging
+		(>&2 echo "Delay: $MAX_DELAY")
 
 		#default sleep; no guest devices
 		sleep $MAX_DELAY
@@ -502,8 +508,11 @@ while true; do
 
 	#check status array for any device marked as 'home'
 	if [ "$(arrayContainsElement "100" ${deviceStatusArray[@]})" == 0 ]; then 
+				#Print Delay for debugging
+		(>&2 echo "Scanning while at least one device is present.")
 		scanForGuests $delayBetweenOwnerScansWhenPresent
 	else
+		(>&2 echo "Scanning while no devies are present.")
 		scanForGuests $delayBetweenOwnerScansWhenAway
 	fi 
 done
