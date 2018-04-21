@@ -342,14 +342,14 @@ while true; do
 		BEACONS_NOW=""
 	fi 
 
+	#reset at least one device home
+	oneDeviceHome=0
+
 	#--------------------------------------
 	#	UPDATE STATUS OF ALL USERS WITH NAME QUERY
 	#--------------------------------------
 	for index in "${!macaddress_owners[@]}"
 	do
-		#reset at least one device home
-		oneDeviceHome=0
-
 		#clear per-loop variables
 		nameScanResult=""
 
