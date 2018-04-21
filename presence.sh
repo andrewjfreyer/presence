@@ -279,8 +279,7 @@ function publish () {
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
 		#debugging 
-		(>&2 echo "MQTT Topic: $mqtt_topicpath$1")
-		(>&2 echo "MQTT Message: $2 $3 $4 $stamp")
+		(>&2 echo "$mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp}")
 
 		#post to mqtt
 		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
