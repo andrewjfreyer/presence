@@ -45,13 +45,13 @@ if [ ! -f "$Base/behavior_preferences" ]; then
   	echo -e "" 
 
   	#default values
-  	echo "nameScanTimeout=3"						> "$Base/behavior_preferences"
-  	echo "delayBetweenOwnerScansWhenAway=8" 		> "$Base/behavior_preferences"
-	echo "delayBetweenOwnerScansWhenPresent=45"		> "$Base/behavior_preferences"
-	echo "verifyByRepeatedlyQuerying=7"				> "$Base/behavior_preferences"
-	echo "verificationLoopDelay=3"					> "$Base/behavior_preferences"
-	echo "beaconScanInterval=5"						> "$Base/behavior_preferences"
-	echo "beaconScanEnabled=0"						> "$Base/behavior_preferences"
+  	echo "nameScanTimeout=3"						>> "$Base/behavior_preferences"
+  	echo "delayBetweenOwnerScansWhenAway=8" 		>> "$Base/behavior_preferences"
+	echo "delayBetweenOwnerScansWhenPresent=45"		>> "$Base/behavior_preferences"
+	echo "verifyByRepeatedlyQuerying=7"				>> "$Base/behavior_preferences"
+	echo "verificationLoopDelay=3"					>> "$Base/behavior_preferences"
+	echo "beaconScanInterval=5"						>> "$Base/behavior_preferences"
+	echo "beaconScanEnabled=0"						>> "$Base/behavior_preferences"
 
 fi  
 
