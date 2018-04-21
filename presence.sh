@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.03
+Version=0.4.04
 
 #color output 
 RED='\033[0;31m'
@@ -473,7 +473,7 @@ while true; do
 				fi 
 				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
-				#checkstan
+				#check scan 
 				if [ "$nameScanResultRepeat" != "" ]; then
 					#we know that we must have been at a previously-seen user status
 					deviceStatusArray[$index]="100"
@@ -482,6 +482,9 @@ while true; do
 					deviceNameArray[$index]="$nameScanResultRepeat"
 
 					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
+
+					#must break confidence scanning loop; 100' iscovered
+					break
 
 				else
 					#update status array
