@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.05
+Version=0.4.06
 
 #color output 
 ORANGE='\033[0;33m'
@@ -37,16 +37,16 @@ MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 # ----------------------------------------------------------------------------------------
 
 #startup message
-echo -e "${GREEN}presence $Version ${NC} - Started"
+echo -e "${GREEN}presence $Version ${NC} - Started${NC}"
 
 #or load from a source file
 if [ ! -f "$Base/behavior_preferences" ]; then 
-	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:"
-	echo -e "/behavior_preferences. Creating file and setting default values."
+	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:${NC}"
+	echo -e "/behavior_preferences. Creating file and setting default values.${NC}"
   	echo -e "" 
 
   	#default values
-  	echo "nameScanTimeout=3"						>> "$Base/behavior_preferences"
+  	echo "nameScanTimeout=4"						>> "$Base/behavior_preferences"
   	echo "delayBetweenOwnerScansWhenAway=8" 		>> "$Base/behavior_preferences"
 	echo "delayBetweenOwnerScansWhenPresent=45"		>> "$Base/behavior_preferences"
 	echo "verifyByRepeatedlyQuerying=7"				>> "$Base/behavior_preferences"
@@ -68,21 +68,21 @@ currentGuestIndex=0
 
 #name scan timeout
 if [[ "$nameScanTimeout" -lt 2 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Name scan timeout is relatively low at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). New bluetooth "
 	echo -e "devices may take more time than this to be discovered."
 fi 
 
 #name scan timeout
 if [[ "$nameScanTimeout" -gt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Name scan timeout is relatively high at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). Built-in"
 	echo -e "timeout, by default, is around five seconds."
 fi 
 
 #owner scans when away
 if [[ "$delayBetweenOwnerScansWhenAway" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Delay between owner scans when away is relatively"
 	echo -e "low at $(( delayBetweenOwnerScansWhenAway > 0 ? delayBetweenOwnerScansWhenAway : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
@@ -92,7 +92,7 @@ fi
 
 #owner scans when present
 if [[ "$delayBetweenOwnerScansWhenPresent" -lt 20 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Delay between owner scans when present is relatively"
 	echo -e "low at $(( delayBetweenOwnerScansWhenPresent > 0 ? delayBetweenOwnerScansWhenPresent : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
@@ -102,7 +102,7 @@ fi
 
 #verification loop size
 if [[ "$verifyByRepeatedlyQuerying" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
 	echo -e "low at $(( verifyByRepeatedlyQuerying > 0 ? verifyByRepeatedlyQuerying : 0)). This can increase the risk of false exit events."
 	echo -e "The greater this value, the lower the probability of false exit events."
@@ -110,7 +110,7 @@ fi
 
 #verification loop delay
 if [[ "$verificationLoopDelay" -lt 2 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Verification loop delay is relatively short or"
 	echo -e "low at $verificationLoopDelay. This can increase the risk of false exit events."
 	echo -e "The greater this value, the lower the probability of "
@@ -119,7 +119,7 @@ fi
 
 #beacons
 if [[ "$beaconScanInterval" -lt 5 ]] && [[ "$beaconScanEnabled" == 1 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+	echo -e "${GREEN}presence $Version - ${RED}WARNING:${NC}"
 	echo -e "${NC}Beacon scan interval is relatively low at $(( beaconScanInterval > 0 ? beaconScanInterval : 0)). This reduces the changes"
 	echo -e "that a beacon will be broadcasting when this script is listening."
 	echo -e "The greater this value, the greater the liklihood that a present beacon"
@@ -227,7 +227,7 @@ function scanForGuests () {
 		MAX_DELAY=$(( MAX_DELAY > 0 ? MAX_DELAY : 0 ))
 
 		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE} DEBUG Appropriate Delay: $MAX_DELAY")
+		(>&2 echo -e "${ORANGE}DEBUG Appropriate Delay: $MAX_DELAY${NC}")
 
 		#sleep the maximum delay 
 		sleep $MAX_DELAY
@@ -237,7 +237,7 @@ function scanForGuests () {
 		MAX_DELAY=$(( delayToImplement > 0 ? delayToImplement : 5))
 
 		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE} DEBUG Appropriate Delay: $MAX_DELAY")
+		(>&2 echo -e "${ORANGE}DEBUG Appropriate Delay: $MAX_DELAY${NC}")
 
 		#default sleep; no guest devices
 		sleep $MAX_DELAY
@@ -314,8 +314,7 @@ if [[ $EUID -ne 0 ]] && [ "$beaconScanEnabled" == 1 ] ; then
   	echo -e "Any BTLE Beacon MAC addresses in the 'owner_devices' configuration" 
   	echo -e "file will be treated as standard bluetooth devices and will likely"
   	echo -e "always return a confidence of 0. Performance may be degraded for "
-  	echo -e "other devices." 
-  	echo -e "" 
+  	echo -e "other devices.${NC}" 
    	IS_ROOT=0
 fi
 
@@ -331,7 +330,7 @@ while true; do
 
 		#check interface health, restore if necessary
 		if [ "$BEACONS_RAW" == "Set scan parameters failed: Input/output error" ];then
-			echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Bluetooth interface went down. Restoring now..."
+			echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Bluetooth interface went down. Restoring now...${NC}"
 			sudo hciconfig hci0 down
 			sleep 1
 			sudo hciconfig hci0 up
@@ -509,10 +508,10 @@ while true; do
 	#check status array for any device marked as 'home'
 	if [ "$oneDeviceHome" == 1 ]; then 
 				#Print Delay for debugging
-		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans when at least one device is present.")
+		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans, when at least one device is present.${NC}")
 		scanForGuests $delayBetweenOwnerScansWhenPresent
 	else
-		(>&2 echo "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between scans when no owner device is present.")
+		(>&2 echo "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans when no owner device is present.${NC}")
 		scanForGuests $delayBetweenOwnerScansWhenAway
 	fi 
 done
