@@ -39,7 +39,7 @@ MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
 echo -e "${GREEN}presence $Version ${NC} - Started"
 
 #or load from a source file
-if [ -f "$Base/behavior_preferences" ]; then 
+if [ ! -f "$Base/behavior_preferences" ]; then 
 	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:"
 	echo -e "/behavior_preferences. Creating file and setting default values."
   	echo -e "" 
