@@ -302,7 +302,7 @@ echo -e "${GREEN}presence $Version ${NC} - Started${NC}"
 
 echo -e "Performance predictions based on current settings:"
 #all owners at home 
-echo -e "  > Est. time for all owners recognized as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) +)) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) +)) seconds."
+echo -e "  > Est. time for all owners recognized as 'away' from 'home': $(( numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) +)) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
 
 #fuzz for one second per owner that is home, plus worst case 
 echo -e "  > Est. time to recognize one owner is 'away': $(( nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
