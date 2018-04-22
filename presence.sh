@@ -17,7 +17,7 @@
 # ----------------------------------------------------------------------------------------
 
 #version number
-Version=0.4.11
+Version=0.4.13
 
 #color output 
 ORANGE='\033[0;33m'
@@ -247,8 +247,8 @@ function scanForGuests () {
 
 function scan () {
 	if [ ! -z "$1" ]; then 
-		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available')
-		#(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
+		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available' | sed 's/[^a-z0-9A-z]//g' )
+		(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
 		echo "$result" 
 	fi
 }
@@ -298,6 +298,7 @@ numberOfGuests=$((${#macaddress_guests[@]}))
 
 #startup message
 echo -e "${GREEN}presence $Version ${NC} - Started. Performance predictions based on current settings:"
+
 #all owners at home 
 echo -e "  > Est. to verify all ($numberOfOwners) owners as 'away' from all 'home': $(( numberOfOwners * (2 * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying) + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
 
@@ -314,7 +315,7 @@ echo -e "  > Est. to recognize one owner is 'home': 0.15 seconds to $(( (beaconS
 beaconDeviceArray=()	#stores idenfiers that record which macs are associated with beacons
 deviceStatusArray=()	#stores status for each bluetooth devices
 deviceNameArray=()		#stores device names for both beacons and bluetooth devices
-oneDeviceHome=0
+atLeastOneOwnerDeviceIsHome=0
 
 # ----------------------------------------------------------------------------------------
 # Check user 
@@ -352,18 +353,20 @@ while true; do
 
 		#if we do not have beacon detection enabled, set the array to blank
 		BEACONS_NOW=""
+
 	fi 
 
 	#reset at least one device home
-	oneDeviceHome=0
+	atLeastOneOwnerDeviceIsHome=0
 
 	#--------------------------------------
 	#	UPDATE STATUS OF ALL USERS WITH NAME QUERY
 	#--------------------------------------
-	for index in "${!macaddress_owners[@]}"
+	for ((index=0; index<${#macaddress_owners[*]}; index++));
 	do
 		#clear per-loop variables
 		nameScanResult=""
+		nameScanResultRepeat=""
 
 		#obtain individual address
 		currentDeviceAddress="${macaddress_owners[$index]}"
@@ -392,6 +395,7 @@ while true; do
 			
 			#calculate difference
 			SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+
 		else
 			### BEACON ###
 
@@ -418,7 +422,7 @@ while true; do
 			deviceStatusArray[$index]="100"
 
 			#set at least one device home
-			oneDeviceHome=1
+			atLeastOneOwnerDeviceIsHome=1
 
 			#set name array
 			deviceNameArray[$index]="$nameScanResult"
@@ -485,41 +489,40 @@ while true; do
 					#calculate difference
 					SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
 
+					#check scan 
+					if [ "$nameScanResultRepeat" != "" ]; then
+						#we know that we must have been at a previously-seen user status
+						deviceStatusArray[$index]="100"
+
+						#update name array
+						deviceNameArray[$index]="$nameScanResultRepeat"
+
+						publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
+
+						#set at least one device home
+						atLeastOneOwnerDeviceIsHome=1
+
+						#must break confidence scanning loop; 100' iscovered
+						break
+					fi
 				fi 
 				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
-				#check scan 
-				if [ "$nameScanResultRepeat" != "" ]; then
-					#we know that we must have been at a previously-seen user status
-					deviceStatusArray[$index]="100"
+				#update status array
+				deviceStatusArray[$index]="$percentage"
 
-					#update name array
-					deviceNameArray[$index]="$nameScanResultRepeat"
+				#retreive last-known name for publication; since we obviously didn't receive a name scan result 
+				expectedName="${deviceNameArray[$index]}"
 
-					publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
+				#report confidence drop
+				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION"
 
-					#set at least one device home
-					oneDeviceHome=1
-
-					#must break confidence scanning loop; 100' iscovered
-					break
-
-				else
-					#update status array
-					deviceStatusArray[$index]="$percentage"
-
-					#retreive last-known name for publication
-					expectedName="${deviceNameArray[$index]}"
-
-					#report confidence drop
-					publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION"
-				fi 
 			done
 		fi
 	done
 
 	#check status array for any device marked as 'home'
-	if [ "$oneDeviceHome" == 1 ]; then 
+	if [ "$atLeastOneOwnerDeviceIsHome" == 1 ]; then 
 				#Print Delay for debugging
 		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans, when at least one device is present.${NC}")
 		scanForGuests $delayBetweenOwnerScansWhenPresent
