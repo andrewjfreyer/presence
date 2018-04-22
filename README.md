@@ -100,7 +100,7 @@ ___
 
 3. Image **jessie lite stretch** to SD card. [Instructions here.](https://www.raspberrypi.org/magpi/pi-sd-etcher/)
 
-4. Mount **boot** partition of imaged SD card
+4. Mount **boot** partition of imaged SD card (unplug it and plug it back in)
 
 5. **[ENABLE SSH]** Create blank file, without any extension, in the root directory called **ssh**
 
@@ -142,6 +142,7 @@ sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get dist-upgrade -y
 sudo rpi-update
+sudo reboot
 ```
 
 4. **[BLUEZ]** Compile/install latest **bluez**
@@ -151,8 +152,9 @@ sudo rpi-update
 sudo apt-get --purge remove bluez
 
 #get latest version number from: https://www.kernel.org/pub/linux/bluetooth/
-cd ~; wget https://www.kernel.org/pub/linux/bluetooth/bluez-XX.XX.tar.xz
-tar xvf bluez-X.XX.tar.xz
+#current version as of this writing is 5.49
+cd ~; wget https://www.kernel.org/pub/linux/bluetooth/bluez-5.49.tar.xz
+tar xvf bluez-5.49.tar.xz
 
 #update errythang again
 sudo apt-get update
@@ -161,7 +163,7 @@ sudo apt-get update
 sudo apt-get install libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev
 
 #move into new unpacked directory
-cd bluez-X.XX
+cd bluez-5.49
 
 #set exports
 export LDFLAGS=-lrt
@@ -222,8 +224,8 @@ sudo aptitude install libmosquitto-dev mosquitto mosquitto-clients
 9. **[INSTALL PRESENCE]**
 ```
 #install git
-sudo apt-get install git
 cd ~
+sudo apt-get install git
 
 #clone this repo
 git clone git://github.com/andrewjfreyer/presence
@@ -234,7 +236,12 @@ cd presence/
 
 10. **[CONFIGURE PRESENCE]** create file named **mqtt_preferences** and include content:
 ```
+nano mqtt_preferences
+```
 
+Then...
+
+```
 mqtt_address="ip.address.of.broker"
 mqtt_user="your broker username"
 mqtt_password="your broker password"
@@ -243,13 +250,37 @@ mqtt_room="your pi's location"
 ```
 
 11. **[CONFIGURE PRESENCE]** create file named **owner_devices** and include mac addresses of devices on separate lines. Do the same with a file named **guest_devices**. Leave either or both files empty if tracking isn't required.
+
+```
+nano owner_devices
 ```
 
+Then...
+
+```
+00:00:00:00:00 #comments 
 00:00:00:00:00
+```
+
+```
+nano guest_devices
+```
+
+Then... (no content required...)
+
+```
+00:00:00:00:00 #comments 
 00:00:00:00:00
 ```
 
 12. **[CONFIGURE SERVICE]** Create file at **/etc/systemd/system/presence.service** and include content:
+
+```
+sudo nano /etc/systemd/system/presence.service
+```
+
+Then...
+
 ```
 [Unit]
 Description=Presence service
