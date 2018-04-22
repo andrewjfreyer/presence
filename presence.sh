@@ -247,7 +247,7 @@ function scanForGuests () {
 
 function scan () {
 	if [ ! -z "$1" ]; then 
-		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available' | sed 's/[^a-z0-9A-z]//g' )
+		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available' | sed 's/[^a-z0-9A-Z]//g' )
 		(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
 		echo "$result" 
 	fi
