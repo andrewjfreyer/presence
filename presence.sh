@@ -604,6 +604,9 @@ while true; do
 			#SHOULD VERIFY ABSENSE
 			for repetition in $(seq 1 $repetitions); 
 			do 
+				#RESET OK TO PUBLISH
+				ok_to_publish=1
+
 				#VERIFICATION LOOP DELAY
 				sleep "$verification_of_away_loop_delay"
 
