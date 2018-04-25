@@ -7,8 +7,7 @@
 #
 # Written by Andrew J Freyer
 # GNU General Public License
-#
-# ----------------------------------------------------------------------------------------
+# http://github.com/andrewjfreyer/presence
 #
 # ----------------------------------------------------------------------------------------
 
@@ -16,108 +15,216 @@
 # INCLUDES & VARIABLES
 # ----------------------------------------------------------------------------------------
 
-#version number
-Version=0.4.13
+#VERSION NUMBER
+VERSION=0.4.25
 
-#color output 
+#COLOR OUTPUT FOR RICH DEBUG 
 ORANGE='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
 PURPLE='\033[1;35m'
 
-#base directory regardless of installation
-Base=$(dirname "$(readlink -f "$0")")
-MQTTPubPath=$(which mosquitto_pub)
+#BASE DIRECTORY REGARDLESS OF INSTALLATION; ELSE MANUALLY SET HERE
+base_directory=$(dirname "$(readlink -f "$0")")
 
-#load preferences if present
-MQTT_CONFIG=$Base/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+#FIND MQTT PATH, ELSE MANUALLY SET HERE
+mosquitto_pub_path=$(which mosquitto_pub)
+mosquitto_sub_path=$(which mosquitto_sub)
+
+#ERROR CHECKING FOR MOSQUITTO PUBLICATION 
+[ -z "$mosquitto_pub_path" ] && echo "Required package 'mosquitto_pub' not found." && exit 1
+
+#CURRENT GUEST THAT CAN ITERATE OVER MULTIPLE INTER-OWNER SCANS 
+current_guest_index=0
 
 # ----------------------------------------------------------------------------------------
-# Set Program Variables
+# LOAD PREFERENCES
 # ----------------------------------------------------------------------------------------
 
-#or load from a source file
-if [ ! -f "$Base/behavior_preferences" ]; then 
-	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Behavior preferences are not defined in:${NC}"
+#OR LOAD FROM A SOURCE FILE
+if [ ! -f "$base_directory/behavior_preferences" ]; then 
+	echo -e "${GREEN}presence $VERSION ${RED}WARNING:  ${NC}Behavior preferences are not defined in:${NC}"
 	echo -e "/behavior_preferences. Creating file and setting default values.${NC}"
   	echo -e "" 
 
-  	#default values
-  	echo "nameScanTimeout=5"						>> "$Base/behavior_preferences"
-  	echo "delayBetweenOwnerScansWhenAway=6" 		>> "$Base/behavior_preferences"
-	echo "delayBetweenOwnerScansWhenPresent=30"		>> "$Base/behavior_preferences"
-	echo "verifyByRepeatedlyQuerying=6"				>> "$Base/behavior_preferences"
-	echo "verificationLoopDelay=3"					>> "$Base/behavior_preferences"
-	echo "beaconScanInterval=5"						>> "$Base/behavior_preferences"
-	echo "beaconScanEnabled=0"						>> "$Base/behavior_preferences"
+  	#DEFAULT VALUES
+  	echo "name_scan_timeout=5"						>> "$base_directory/behavior_preferences"
+  	echo "delay_between_owner_scans_away=6" 		>> "$base_directory/behavior_preferences"
+	echo "delay_between_owner_scans_present=30"		>> "$base_directory/behavior_preferences"
+	echo "verification_of_away_loop_size=6"			>> "$base_directory/behavior_preferences"
+	echo "verification_of_away_loop_delay=3"		>> "$base_directory/behavior_preferences"
+	echo "beacon_scan_interval=5"					>> "$base_directory/behavior_preferences"
+	echo "beacon_scan_enabled=0"					>> "$base_directory/behavior_preferences"
 fi  
 
-#set preferences from file
-DELAY_CONFIG="$Base/behavior_preferences" ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
+# ----------------------------------------------------------------------------------------
+# BACKWARD COMPATBILITY FOR BEHAVIOR PREFERENCES
+# ----------------------------------------------------------------------------------------
+[ -z "$name_scan_timeout" ] && name_scan_timeout=$nameScanTimeout
+[ -z "$delay_between_owner_scans_away" ] && delay_between_owner_scans_away=$delayBetweenOwnerScansWhenAway
+[ -z "$delay_between_owner_scans_present" ] && delay_between_owner_scans_present=$delayBetweenOwnerScansWhenPresent
+[ -z "$verification_of_away_loop_size" ] && verification_of_away_loop_size=$verifyByRepeatedlyQuerying
+[ -z "$verification_of_away_loop_delay" ] && verification_of_away_loop_delay=$verificationLoopDelay
+[ -z "$beacon_scan_interval" ] && beacon_scan_interval=$beaconScanInterval
+[ -z "$beacon_scan_enabled" ] && beacon_scan_enabled=$beaconScanEnabled
 
-#current guest
-currentGuestIndex=0
+if [ ! -z $nameScanTimeout ];then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:$"
+	echo -e "Please update behavior_preferences variable naming scheme by deleting the existing file."
+fi 
 
 # ----------------------------------------------------------------------------------------
-# ERROR CHECKING FOR BEHAVIOR PREFERENCES 
+# VARIABLE DEFINITIONS 
 # ----------------------------------------------------------------------------------------
 
-#name scan timeout
-if [[ "$nameScanTimeout" -lt 3 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
-	echo -e "Name scan timeout is relatively low at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). New bluetooth "
+#SET PREFERENCES FROM FILE
+DELAY_CONFIG="$base_directory/behavior_preferences" ; [ -f $DELAY_CONFIG ] && source $DELAY_CONFIG
+
+#LOAD PREFERENCES IF PRESENT
+MQTT_CONFIG=$base_directory/mqtt_preferences ; [ -f $MQTT_CONFIG ] && source $MQTT_CONFIG
+
+#FILL ADDRESS ARRAY WITH SUPPORT FOR COMMENTS
+macaddress_guests=($(cat "$base_directory/guest_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
+macaddress_owners=($(cat "$base_directory/owner_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
+
+#NUMBER OF CLIENTS THAT ARE MONITORED
+number_of_owners=$((${#macaddress_owners[@]}))
+number_of_guests=$((${#macaddress_guests[@]}))
+
+# ----------------------------------------------------------------------------------------
+# HELP TEXT
+# ----------------------------------------------------------------------------------------
+
+show_help_text() {
+	echo "Usage:"
+	echo "  presence -h 		show usage information"
+	echo "  presence -d 		print debug messages and mqtt messages"
+	echo "  presence -b 		binary output only; either 100 or 0 confidence"
+	echo "  presence -c 		only post confidence status changes for owners/guests"
+	echo "  presence -t <1,2>	trigger mode; only scan in response to MQTT message posted"
+	echo "			to '$mqtt_topicpath/scan'. The payload of the message can"
+	echo "			include a 'duration' value to define how long the looping"
+	echo "			detection should continue. Default is 120 seconds."
+	echo ""
+	echo "			Mode 1: require a trigger for each scan"  
+	echo "			Mode 2: require a trigger to scan only when at least"  
+	echo "			one owner is home. When all owners are gone,"
+	echo "			scanning is periodic (behavior_preferences)"
+	echo "  presence -V		print version"
+}
+
+# ----------------------------------------------------------------------------------------
+# PROCESS OPTIONS (technique: https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
+# ----------------------------------------------------------------------------------------
+
+OPTIND=1
+
+# INITIALIZE OUR OWN VARIABLES:
+debug=0
+binary_only=0
+changes_only=0
+trigger_only_on_message=0
+trigger_mode=0
+
+while getopts "h?vdbct:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help_text
+        exit 0
+        ;;
+    V)  
+		echo "$VERSION"
+		exit 0
+		;;
+    d)  debug=1
+		;;
+    b)  binary_only=1
+		;;
+	c)  changes_only=1
+		;;
+	t)  	
+	    trigger_mode=$OPTARG
+      	trigger_only_on_message=1
+		;;
+    esac
+done
+
+#RESET OPTION INDEX
+shift $((OPTIND-1))
+
+#SHIFT IF NECESSARY
+[ "$1" = "--" ] && shift
+
+# ----------------------------------------------------------------------------------------
+# DEBUG FUNCTION
+# ----------------------------------------------------------------------------------------
+
+debug_echo () {
+	if [ "$debug" == "1" ]; then 
+		(>&2 echo -e "${ORANGE}DEBUG MSG:	$1${NC}")
+	fi 
+}
+
+# ----------------------------------------------------------------------------------------
+# ERROR CHECKING 
+# ----------------------------------------------------------------------------------------
+
+#NAME SCAN TIMEOUT
+if [[ "$name_scan_timeout" -lt 3 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
+	echo -e "Name scan timeout is relatively low at $(( name_scan_timeout > 0 ? name_scan_timeout : 0)). New bluetooth "
 	echo -e "devices may take more time than this to be discovered.${NC}"
 fi 
 
-#name scan timeout
-if [[ "$nameScanTimeout" -gt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
-	echo -e "Name scan timeout is relatively high at $(( nameScanTimeout > 0 ? nameScanTimeout : 0)). Built-in"
+#NAME SCAN TIMEOUT
+if [[ "$name_scan_timeout" -gt 5 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
+	echo -e "Name scan timeout is relatively high at $(( name_scan_timeout > 0 ? name_scan_timeout : 0)). Built-in"
 	echo -e "timeout, by default, is around five to six seconds.${NC}"
 fi 
 
-#owner scans when away
-if [[ "$delayBetweenOwnerScansWhenAway" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:$"
+#OWNER SCANS WHEN AWAY
+if [[ "$delay_between_owner_scans_away" -lt 5 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:$"
 	echo -e "Delay between owner scans when away is relatively"
-	echo -e "low at $(( delayBetweenOwnerScansWhenAway > 0 ? delayBetweenOwnerScansWhenAway : 0)). This may slow down the server because the BT hardware"
+	echo -e "low at $(( delay_between_owner_scans_away > 0 ? delay_between_owner_scans_away : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
 	echo -e "this value. The greater this value, the more time it will take"
 	echo -e "to recognize when a device has arrived.${NC}"
 fi 
 
-#owner scans when present
-if [[ "$delayBetweenOwnerScansWhenPresent" -lt 20 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+#OWNER SCANS WHEN PRESENT
+if [[ "$delay_between_owner_scans_present" -lt 20 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
 	echo -e "Delay between owner scans when present is relatively"
-	echo -e "low at $(( delayBetweenOwnerScansWhenPresent > 0 ? delayBetweenOwnerScansWhenPresent : 0)). This may slow down the server because the BT hardware"
+	echo -e "low at $(( delay_between_owner_scans_present > 0 ? delay_between_owner_scans_present : 0)). This may slow down the server because the BT hardware"
 	echo -e "will be actively scanning more frequently. Consider increasing"
 	echo -e "this value. The greater this value, the more time it will take"
 	echo -e "to recognize that a devices has left.${NC}"
 fi 
 
-#verification loop size
-if [[ "$verifyByRepeatedlyQuerying" -lt 5 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
-	echo -e "Verification loop (i.e., verifyByRepeatedlyQuerying) is relatively"
-	echo -e "low at $(( verifyByRepeatedlyQuerying > 0 ? verifyByRepeatedlyQuerying : 0)). This can increase the risk of false exit events."
+#VERIFICATION LOOP SIZE
+if [[ "$verification_of_away_loop_size" -lt 5 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
+	echo -e "Verification loop (i.e., verification_of_away_loop_size) is relatively"
+	echo -e "low at $(( verification_of_away_loop_size > 0 ? verification_of_away_loop_size : 0)). This can increase the risk of false exit events."
 	echo -e "The greater this value, the lower the probability of false exit events.${NC}"
 fi 
 
-#verification loop delay
-if [[ "$verificationLoopDelay" -lt 2 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
+#VERIFICATION LOOP DELAY
+if [[ "$verification_of_away_loop_delay" -lt 2 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
 	echo -e "Verification loop delay is relatively short or"
-	echo -e "low at $verificationLoopDelay. This can increase the risk of false exit events."
+	echo -e "low at $verification_of_away_loop_delay. This can increase the risk of false exit events."
 	echo -e "The greater this value, the lower the probability of "
 	echo -e "false exit events.${NC}"
 fi 
 
-#beacons
-if [[ "$beaconScanInterval" -lt 5 ]] && [[ "$beaconScanEnabled" == 1 ]]; then 
-	echo -e "${GREEN}presence $Version - ${RED}WARNING:"
-	echo -e "Beacon scan interval is relatively low at $(( beaconScanInterval > 0 ? beaconScanInterval : 0)). This reduces the changes"
+#BEACONS
+if [[ "$beacon_scan_interval" -lt 5 ]] && [[ "$beacon_scan_enabled" == 1 ]]; then 
+	echo -e "${GREEN}presence $VERSION - ${RED}WARNING:"
+	echo -e "Beacon scan interval is relatively low at $(( beacon_scan_interval > 0 ? beacon_scan_interval : 0)). This reduces the changes"
 	echo -e "that a beacon will be broadcasting when this script is listening."
 	echo -e "The greater this value, the greater the liklihood that a present beacon"
 	echo -e "will be recognized.${NC}"
@@ -127,408 +234,514 @@ fi
 # SCAN FOR GUEST DEVICES DURING OWNER DEVICE TIMEOUTS
 # ----------------------------------------------------------------------------------------
 
-function scanForGuests () {
-	#to determine correct exit time for while loop
-	STARTTIME=$(date +%s)
+scan_for_guests () {
+	#TO DETERMINE CORRECT EXIT TIME FOR WHILE LOOP
+	local STARTTIME=$(date +%s)
 
-	#init end time
-	ENDTIME=0
+	#INIT END TIME
+	local ENDTIME=0
 
-	#this time
-	seen=()
+	#THIS TIME
+	local seen=()
 
-	#delay type
-	delayToImplement=$1
+	#PUBLISH?
+	local ok_to_publish_guest=1
 
-	#if we have guest devices to scan for, then scan for them!
+	#DELAY TYPE
+	local delay_to_implement=$1
+
+	#IF WE HAVE GUEST DEVICES TO SCAN FOR, THEN SCAN FOR THEM!
 	if [ ! -z "$macaddress_guests" ]; then 
 
 		#calculate 
-		DIFFERENCE=$((ENDTIME - STARTTIME))
+		local DIFFERENCE=$((ENDTIME - STARTTIME))
 
-		#start while loop during owner scans; using a while loop here instead of 
-		#a for loop so that we can exit the loop on time without missing
-		#guest scans. For example, if the owner loop only permits 5 seconds to scan, 
-		#we might only be able to scan one guest at a time per call of 
-		#this function. 
+		#START WHILE LOOP DURING OWNER SCANS; USING A WHILE LOOP HERE INSTEAD OF 
+		#A FOR LOOP SO THAT WE CAN EXIT THE LOOP ON TIME WITHOUT MISSING
+		#GUEST SCANS. FOR EXAMPLE, IF THE OWNER LOOP ONLY PERMITS 5 SECONDS TO SCAN, 
+		#WE MIGHT ONLY BE ABLE TO SCAN ONE GUEST AT A TIME PER CALL OF 
+		#THIS FUNCTION. 
 
-		while [ $DIFFERENCE -lt $delayToImplement ]
+		while [ $DIFFERENCE -lt $delay_to_implement ]
 		do
 
-			#calculate remainder of delay
-			MAX_DELAY=$((delayToImplement - DIFFERENCE)) 
+			#CALCULATE REMAINDER OF DELAY
+			local MAX_DELAY=$(( delay_to_implement - DIFFERENCE )) 
 
-			#cache bluetooth results 
-			nameScanResult=""
+			#CACHE BLUETOOTH RESULTS 
+			local name_scan_result_guest=""
 
-			#obtain individual address
-			currentGuestDeviceAddress="${macaddress_guests[$currentGuestIndex]}"
+			#OBTAIN INDIVIDUAL ADDRESS
+			local current_guest_device_address="${macaddress_guests[$current_guest_index]}"
 
-			#check if we've already scanned this device recently
-			if [ "${seen[$currentGuestIndex]}" == "1" ]; then 
+			#IF BLANK, PRESUME ERROR AND PROCEED TO BEGINNING OF GUEST ARRAY
+			[ -z "$current_guest_device_address" ] && current_guest_index=0 && current_guest_device_address="${macaddress_guests[$current_guest_index]}"
 
-				##make sure that we're not implementing a negative delay
+			#CHECK IF WE'VE ALREADY SCANNED THIS DEVICE; THIS MEANS WE HAVE ITERATED 
+			#OVER ALL GUEST DEVICES IN THIS INTER-OWNER DEVICE SCAN INTERVAL
+			if [ "${seen[$current_guest_index]}" == "1" ]; then 
+
+				##MAKE SURE THAT WE'RE NOT IMPLEMENTING A NEGATIVE DELAY
 				MAX_DELAY=$(( MAX_DELAY > 0 ? MAX_DELAY : 0 ))
 
-				#delay to the max value
+				#PRINT DELAY FOR DEBUGGING
+				debug_echo "Appropriate Delay: $MAX_DELAY"
+
+				#DELAY TO THE MAX VALUE
 				sleep $MAX_DELAY 
 
-				#we have already been notified of this guest device already in this loop; time to break
-				break
-			fi
-			
-			#iterate the current guest that we're looking for
-			currentGuestIndex=$((currentGuestIndex+1))
-			
-			#correct the guest index
+				#RESET CURRENT GUEST INDEX TO ZERO
+				current_guest_index=0
 
-			if [ "$currentGuestIndex" -gt "$(( numberOfGuests - 1 ))" ] ; then 
-				currentGuestIndex=0
+				#WE HAVE ALREADY BEEN NOTIFIED OF THIS GUEST DEVICE ALREADY IN THIS LOOP; TIME TO BREAK
+				return
 			fi
 
-			#mark as seen
-			seen[$currentGuestIndex]=1
+			#CORRECT THE GUEST INDEX
+			if [ "$current_guest_index" -gt "$(( number_of_guests - 1 ))" ] ; then 
+				current_guest_index=0
+			fi
 
-			#mark beginning of scan operation
-			STARTSCAN_GUEST=$(date +%s%N)
+			#MARK AS SEEN
+			seen[$current_guest_index]=1
 
-			#obtain results and append each to the same
-			nameScanResult=$(scan $currentGuestDeviceAddress)
+			#MARK BEGINNING OF SCAN OPERATION
+			local start_timer_guest=$(date +%s%N)
+
+			#OBTAIN RESULTS AND APPEND EACH TO THE SAME
+			local name_scan_result_guest=$(scan $current_guest_device_address)
 			
-			#mark end of scan operation
-			ENDSCAN_GUEST=$(date +%s%N)
+			#MARK END OF SCAN OPERATION
+			local end_time_guest=$(date +%s%N)
 			
-			#calculate difference
-			SCAN_DURATION_GUEST=$(( (ENDSCAN_GUEST - STARTSCAN_GUEST) / 1000000 )) 
+			#CALCULATE DIFFERENCE
+			local duration_timer_guest=$(( (end_time_guest - start_timer_guest) / 1000000 )) 
 			
-			#this device name is present
-			if [ "$nameScanResult" != "" ]; then
-				#publish the presence of the guest 
-				publish "/guest/$mqtt_room/$currentGuestDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION_GUEST"
+			#THIS DEVICE NAME IS PRESENT
+			if [ "$name_scan_result_guest" != "" ]; then
+				#OK TO PUBLISH?
+				[ "${guest_device_statuses[$current_guest_index]}" == '100' ] && [ "$changes_only" == 1 ] && ok_to_publish_guest=0
+
+				#SET GUEST DEVICE STATUS
+				guest_device_statuses[$current_guest_index]="100"
+
+				#PUBLISH THE PRESENCE OF THE GUEST 
+				[ "$ok_to_publish_guest" == "1" ] && publish "/guest/$mqtt_room/$current_guest_device_address" '100' "$name_scan_result_guest" "$duration_timer_guest"
 			else
-				publish "/guest/$mqtt_room/$currentGuestDeviceAddress" '0' "$nameScanResult" "$SCAN_DURATION_GUEST"
+				#OK TO PUBLISH?
+				[ "${guest_device_statuses[$current_guest_index]}" == '0' ] && [ "$changes_only" == 1 ] && ok_to_publish_guest=0
+
+				#SET GUEST DEVICE STATUS
+				guest_device_statuses[$current_guest_index]="0"
+
+				[ "$ok_to_publish_guest" == "1" ] && publish "/guest/$mqtt_room/$current_guest_device_address" '0' "$name_scan_result_guest" "$duration_timer_guest"
 			fi
 
-			#set endtime 
+			#ITERATE THE CURRENT GUEST THAT WE'RE LOOKING FOR
+			current_guest_index=$((current_guest_index+1))
+
+			#SET ENDTIME 
 			ENDTIME=$(date +%s)
 
-			#refersh differnce
+			#REFERSH DIFFERNCE
 			DIFFERENCE=$((ENDTIME - STARTTIME)) 
 
 		done
 
-		#calculate final max delay
-		MAX_DELAY=$((delayToImplement - DIFFERENCE)) 
+		### NEED TO FIND THE REMAINDER OF TIME NEEDED BETWEEN OWNER SCANS
 
-		#less than zero? 
+		#SET ENDTIME 
+		ENDTIME=$(date +%s)
+
+		#REFERSH DIFFERNCE
+		DIFFERENCE=$((ENDTIME - STARTTIME)) 
+
+
+		#CALCULATE FINAL MAX DELAY
+		local MAX_DELAY=$((delay_to_implement - DIFFERENCE)) 
+
+		#LESS THAN ZERO? 
 		MAX_DELAY=$(( MAX_DELAY > 0 ? MAX_DELAY : 0 ))
 
-		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE}DEBUG Appropriate Delay: $MAX_DELAY${NC}")
+		#PRINT DELAY FOR DEBUGGING
+		debug_echo "Remainder of delay before next owner scan: $MAX_DELAY"
 
-		#sleep the maximum delay 
+		#SLEEP THE MAXIMUM DELAY 
 		sleep $MAX_DELAY
 
 	else
-		#error corrections; need to have minimum delay
-		MAX_DELAY=$(( delayToImplement > 0 ? delayToImplement : 5))
+		#ERROR CORRECTIONS; NEED TO HAVE MINIMUM DELAY
+		local MAX_DELAY=$(( delay_to_implement > 0 ? delay_to_implement : 5))
 
-		#Print Delay for debugging
-		(>&2 echo -e "${ORANGE}DEBUG Appropriate Delay: $MAX_DELAY${NC}")
+		#PRINT DELAY FOR DEBUGGING
+		debug_echo "Remainder of delay before next owner scan: $MAX_DELAY"
 
-		#default sleep; no guest devices
+		#DEFAULT SLEEP; NO GUEST DEVICES
 		sleep $MAX_DELAY
     fi
 }
 
 # ----------------------------------------------------------------------------------------
-# Scan script
+# SCAN 
 # ----------------------------------------------------------------------------------------
 
-function scan () {
+scan () {
 	if [ ! -z "$1" ]; then 
-		result=$(timeout --signal SIGINT $nameScanTimeout hcitool name "$1" 2>&1 | grep -v 'not available' )
-		(>&2 echo -e "${ORANGE}DEBUG Scan result: $result ${NC}")
+		local result=$(timeout --signal SIGINT $name_scan_timeout hcitool -i hci0 name "$1" 2>&1 | grep -v 'not available' | grep -vE "hcitool|timeout|invalid|error" )
+		debug_echo "Scan result: [$result]"
 		echo "$result" 
 	fi
 }
 
 # ----------------------------------------------------------------------------------------
-# Publish Message
-# device mac address; percentage
+# PUBLISH MESSAGE
 # ----------------------------------------------------------------------------------------
 
-function publish () {
+publish () {
 	if [ ! -z "$1" ]; then 
 
-		#set name for 'unkonwn'
-		name="$3"
+		#SET NAME FOR 'UNKONWN'
+		local name="$3"
 
-		#if no name, return "unknown"
+		#IF NO NAME, RETURN "UNKNOWN"
 		if [ -z "$3" ]; then 
 			name="Unknown"
 		fi 
 
-		#timestamp
+		#TIMESTAMP
 		stamp=$(date "+%a %b %d %Y %H:%M:%S GMT%z (%Z)")
 
-		#debugging 
-		(>&2 echo -e "${PURPLE}$mqtt_topicpath$1 { confidence : $2, name : $3, scan_duration_ms: $4, timestamp : $stamp} ${NC}")
+		#DEBUGGING 
+		[ "$debug" == "1" ] && (>&2 echo -e "${PURPLE}$mqtt_topicpath$1 { confidence : $2, name : $name, scan_duration_ms: $4, timestamp : $stamp} ${NC}")
 
-		#post to mqtt
-		$MQTTPubPath -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
+		#POST TO MQTT
+		$mosquitto_pub_path -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"confidence\":\"$2\",\"name\":\"$name\",\"scan_duration_ms\":\"$4\",\"timestamp\":\"$stamp\"}"
 	fi
 }
 
 # ----------------------------------------------------------------------------------------
-# Preliminary Notifications
+# WORST CASE ESTIMATIONS 
 # ----------------------------------------------------------------------------------------
 
-#Fill Address Array with support for comments
-macaddress_guests=($(cat "$Base/guest_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
-macaddress_owners=($(cat "$Base/owner_devices" | grep -oiE "([0-9a-f]{2}:){5}[0-9a-f]{2}" ))
+#STARTUP MESSAGE
+[ "$debug" == "1" ] && echo -e "${GREEN}presence $VERSION ${NC} - Started. Performance predictions based on current settings:"
 
-#Number of clients that are monitored
-numberOfOwners=$((${#macaddress_owners[@]}))
-numberOfGuests=$((${#macaddress_guests[@]}))
+#ALL OWNERS AT HOME 
+[ "$debug" == "1" ] && echo -e "  > Est. to verify all ($number_of_owners) owners as 'away' from all 'home': $(( number_of_owners * (2 * verification_of_away_loop_size + verification_of_away_loop_delay * verification_of_away_loop_size) + (beacon_scan_enabled == 1 ? beacon_scan_interval : 0 ))) seconds to $(( delay_between_owner_scans_present + number_of_owners * name_scan_timeout * verification_of_away_loop_delay * verification_of_away_loop_size + (beacon_scan_enabled == 1 ? beacon_scan_interval : 0 ))) seconds."
 
-# ----------------------------------------------------------------------------------------
-# Worst Case Estimations 
-# ----------------------------------------------------------------------------------------
+#FUZZ FOR ONE SECOND PER OWNER THAT IS HOME, PLUS WORST CASE 
+[ "$debug" == "1" ] && echo -e "  > Est. to verify one owner is 'away': $(( 2 * verification_of_away_loop_size + verification_of_away_loop_delay * verification_of_away_loop_size )) to $(( (beacon_scan_enabled == 1 ? beacon_scan_interval : 0 ) + delay_between_owner_scans_present + (number_of_owners - 1) + name_scan_timeout * verification_of_away_loop_delay * verification_of_away_loop_size )) seconds." 
 
-#startup message
-echo -e "${GREEN}presence $Version ${NC} - Started. Performance predictions based on current settings:"
-
-#all owners at home 
-echo -e "  > Est. to verify all ($numberOfOwners) owners as 'away' from all 'home': $(( numberOfOwners * (2 * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying) + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds to $(( delayBetweenOwnerScansWhenPresent + numberOfOwners * nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying + (beaconScanEnabled == 1 ? beaconScanInterval : 0 ))) seconds."
-
-#fuzz for one second per owner that is home, plus worst case 
-echo -e "  > Est. to verify one owner is 'away': $(( 2 * verifyByRepeatedlyQuerying + verificationLoopDelay * verifyByRepeatedlyQuerying )) to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenPresent + (numberOfOwners - 1) + nameScanTimeout * verificationLoopDelay * verifyByRepeatedlyQuerying )) seconds." 
-
-#0.15 seconds is experimenatally obtained on a raspberry pi
-echo -e "  > Est. to recognize one owner is 'home': 0.15 seconds to $(( (beaconScanEnabled == 1 ? beaconScanInterval : 0 ) + delayBetweenOwnerScansWhenAway + (numberOfOwners - 1) + nameScanTimeout )) seconds." 
+#0.15 SECONDS IS EXPERIMENATALLY OBTAINED ON A RASPBERRY PI
+[ "$debug" == "1" ] && echo -e "  > Est. to recognize one owner is 'home': 0.15 seconds to $(( (beacon_scan_enabled == 1 ? beacon_scan_interval : 0 ) + delay_between_owner_scans_away + (number_of_owners - 1) + name_scan_timeout )) seconds." 
 
 # ----------------------------------------------------------------------------------------
-# Main Loop
+# MAIN LOOP
 # ----------------------------------------------------------------------------------------
 
-beaconDeviceArray=()	#stores idenfiers that record which macs are associated with beacons
-deviceStatusArray=()	#stores status for each bluetooth devices
-deviceNameArray=()		#stores device names for both beacons and bluetooth devices
-atLeastOneOwnerDeviceIsHome=0
+beacon_devices=()			#STORES IDENFIERS THAT RECORD WHICH MACS ARE ASSOCIATED WITH BEACONS
+device_statuses=()			#STORES STATUS FOR EACH BLUETOOTH DEVICES
+guest_device_statuses=()	#STORES STATUS FOR EACH BLUETOOTH DEVICES
+device_names=()				#STORES DEVICE NAMES FOR BOTH BEACONS AND BLUETOOTH DEVICES
+one_owner_home=0 			#FLAG FOR AT LEAST ONE OWNER BEING HOME
+trigger_stop_time=0 		#FLAG FOR TRIGGERING SCAN EVENTS OF PARTICULAR DURATION
 
 # ----------------------------------------------------------------------------------------
-# Check user 
+# CHECK USER 
 # ----------------------------------------------------------------------------------------
 
-IS_ROOT=1
+has_root_permission=1
 
-if [[ $EUID -ne 0 ]] && [ "$beaconScanEnabled" == 1 ] ; then
-  	echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Beacon detection requires root; man hcitool for detail."
+if [[ $EUID -ne 0 ]] && [ "$beacon_scan_enabled" == 1 ] ; then
+  	echo -e "${GREEN}presence $VERSION ${RED}WARNING:  ${NC}Beacon detection requires root; man hcitool for detail."
   	echo -e "Any BTLE Beacon MAC addresses in the 'owner_devices' configuration" 
   	echo -e "file will be treated as standard bluetooth devices and will likely"
   	echo -e "always return a confidence of 0. Performance may be degraded for "
   	echo -e "other devices.${NC}" 
-   	IS_ROOT=0
+   	has_root_permission=0
 fi
 
-#begin the operational loop
+# ----------------------------------------------------------------------------------------
+# START THE OPERATIONAL LOOP
+# ----------------------------------------------------------------------------------------
+
 while true; do 
 
 	#--------------------------------------
 	#	OPEN SCANNING FOR BLUETOOTH LE DEVICES
 	#--------------------------------------
-	if [ "$IS_ROOT" == 1 ] && [ "$beaconScanEnabled" == 1 ] ; then 
-		BEACONS_RAW=$(sudo timeout --signal SIGINT $beaconScanInterval hcitool lescan --duplicates 2>&1)
-		BEACONS_NOW=$(echo "$BEACONS_RAW" | grep -Ei "([0-9a-f]{2}:){5}[0-9a-f]{2}" | sort -u)
+	if [ "$has_root_permission" == 1 ] && [ "$beacon_scan_enabled" == 1 ] ; then 
+		beacons_raw=$(sudo timeout --signal SIGINT $beacon_scan_interval hcitool lescan --duplicates 2>&1)
+		beacons_filtered=$(echo "$beacons_raw" | grep -Ei "([0-9a-f]{2}:){5}[0-9a-f]{2}" | sort -u)
 
-		#check interface health, restore if necessary
-		if [ "$BEACONS_RAW" == "Set scan parameters failed: Input/output error" ];then
-			echo -e "${GREEN}presence $Version ${RED}WARNING:  ${NC}Bluetooth interface went down. Restoring now...${NC}"
+		#CHECK INTERFACE HEALTH, RESTORE IF NECESSARY
+		if [ "$beacons_raw" == "Set scan parameters failed: Input/output error" ];then
+			echo -e "${GREEN}presence $VERSION ${RED}WARNING:  ${NC}Bluetooth interface went down. Restoring now...${NC}"
 			sudo hciconfig hci0 down
 			sleep 1
 			sudo hciconfig hci0 up
 		fi
 	else
 
-		#if we do not have beacon detection enabled, set the array to blank
-		BEACONS_NOW=""
+		#IF WE DO NOT HAVE BEACON DETECTION ENABLED, SET THE ARRAY TO BLANK
+		beacons_filtered=""
 
 	fi 
 
-	#reset at least one device home
-	atLeastOneOwnerDeviceIsHome=0
+	#RESET AT LEAST ONE DEVICE HOME
+	one_owner_home=0
 
 	#--------------------------------------
 	#	UPDATE STATUS OF ALL USERS WITH NAME QUERY
 	#--------------------------------------
 	for ((index=0; index<${#macaddress_owners[*]}; index++));
 	do
-		#clear per-loop variables
-		nameScanResult=""
-		nameScanResultRepeat=""
+		#CLEAR PER-LOOP VARIABLES
+		name_scan_result=""
+		name_scan_result_verify=""
+		ok_to_publish=1
 
-		#obtain individual address
-		currentDeviceAddress="${macaddress_owners[$index]}"
+		#OBTAIN INDIVIDUAL ADDRESS
+		current_device_address="${macaddress_owners[$index]}"
 
-		#was found? 
-		IS_BEACON=$(echo "$BEACONS_NOW" | grep -ic $currentDeviceAddress)
+		#WAS FOUND? 
+		is_beacon=$(echo "$beacons_filtered" | grep -ic $current_device_address)
 
-		#check for additional blank lines in address file
-		if [ -z "$currentDeviceAddress" ]; then 
+		#CHECK FOR ADDITIONAL BLANK LINES IN ADDRESS FILE
+		if [ -z "$current_device_address" ]; then 
 			continue
 		fi
 
-		#test if current device was found on a beacon scan
+		#TEST IF CURRENT DEVICE WAS FOUND ON A BEACON SCAN
 
-		if [ "$IS_BEACON" == 0 ]; then  
+		if [ "$is_beacon" == 0 ]; then  
 			### NON BEACON ###
 
-			#mark beginning of scan operation
-			STARTSCAN=$(date +%s%N)
+			#MARK BEGINNING OF SCAN OPERATION
+			start_timer=$(date +%s%N)
 
-			#obtain results and append each to the same
-			nameScanResult=$(scan $currentDeviceAddress)
+			#OBTAIN RESULTS AND APPEND EACH TO THE SAME
+			name_scan_result=$(scan $current_device_address)
 			
-			#mark end of scan operation
-			ENDSCAN=$(date +%s%N)
+			#MARK END OF SCAN OPERATION
+			end_time=$(date +%s%N)
 			
-			#calculate difference
-			SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+			#CALCULATE DIFFERENCE
+			duration_timer=$(( (end_time - start_timer) / 1000000 )) 
 
 		else
 			### BEACON ###
 
-			#set the name as the device addres
-			nameScanResult="$currentDeviceAddress"
+			#SET THE NAME AS THE DEVICE ADDRES
+			name_scan_result="$current_device_address"
 
-			#set scan duration to timeout
-			SCAN_DURATION="$((beaconScanInterval * 1000))"
+			#SET SCAN DURATION TO TIMEOUT
+			duration_timer="$((beacon_scan_interval * 1000))"
 
-			#set beacon array so that we can ignore if beacon leaves
-			beaconDeviceArray[$index]=1
+			#SET BEACON ARRAY SO THAT WE CAN IGNORE IF BEACON LEAVES
+			beacon_devices[$index]=1
 
 		fi 
-		#echo to stderr for debug and testing
-		#(>&2 echo "Duration: $SCAN_DURATION ms")
 
-		#this device name is present
-		if [ "$nameScanResult" != "" ]; then
+		#THIS DEVICE NAME IS PRESENT
+		if [ "$name_scan_result" != "" ]; then
 
-			#no duplicate messages
-			publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResult" "$SCAN_DURATION"
+			#STATE IS SAME && ONLY REPORT CHANGES THEN DISABLE PUBLICATION
+			[ "${device_statuses[$index]}" == '100' ] && [ "$changes_only" == 1 ] && ok_to_publish=0
 
-			#user status			
-			deviceStatusArray[$index]="100"
+			#NO DUPLICATE MESSAGES
+			[ "$ok_to_publish" == "1" ] && publish "/owner/$mqtt_room/$current_device_address" '100' "$name_scan_result" "$duration_timer"
 
-			#set at least one device home
-			atLeastOneOwnerDeviceIsHome=1
+			#USER STATUS			
+			device_statuses[$index]="100"
 
-			#set name array
-			deviceNameArray[$index]="$nameScanResult"
+			#SET AT LEAST ONE DEVICE HOME
+			one_owner_home=1
+
+			#SET NAME ARRAY
+			device_names[$index]="$name_scan_result"
 
 		else
 
-			#Handle beacons first
-			was_beacon="${beaconDeviceArray[$index]}"
+			#HANDLE BEACONS FIRST
+			was_beacon="${beacon_devices[$index]}"
 
-			#if this was previously marked as a beacon, skip name scanning
-			if [ "$was_beacon" == '1' ]; then 
-				#no duplicate messages
-				publish "/owner/$mqtt_room/$currentDeviceAddress" '0' "$nameScanResult" "$SCAN_DURATION"
+			#IF THIS WAS PREVIOUSLY MARKED AS A BEACON, SKIP NAME SCANNING
+			if [ "$was_beacon" == '1' ]; then
+				
+				#STATE IS SAME && ONLY REPORT CHANGES THEN DISABLE PUBLICATION
+				[ "${device_statuses[$index]}" == '0' ] && [ "$changes_only" == 1 ] && ok_to_publish=0
 
-				#user status			
-				deviceStatusArray[$index]="0"
+				#NO DUPLICATE MESSAGES
+				[ "$ok_to_publish" == "1" ] && publish "/owner/$mqtt_room/$current_device_address" '0' "$name_scan_result" "$duration_timer"
 
-				#set name array
-				deviceNameArray[$index]="$nameScanResult"
+				#USER STATUS			
+				device_statuses[$index]="0"
 
-				#next mac address
+				#SET NAME ARRAY
+				device_names[$index]="$name_scan_result"
+
+				#NEXT MAC ADDRESS
 				continue
 			fi 
 
-			#if we do not have a beacon...
-
-			#user status			
-			status="${deviceStatusArray[$index]}"
+			#USER STATUS			
+			status="${device_statuses[$index]}"
 
 			if [ -z "$status" ]; then 
 				status="0"
 			fi 
 
-			#by default, set repetition to preference
-			repetitions="$verifyByRepeatedlyQuerying"
+			#BY DEFAULT, SET REPETITION TO PREFERENCE
+			repetitions="$verification_of_away_loop_size"
 
-			#if we are just starting or, alternatively, we have recorded the status 
-			#of not home already, only scan one more time. 
+			#IF WE ARE JUST STARTING OR, ALTERNATIVELY, WE HAVE RECORDED THE STATUS 
+			#OF NOT HOME ALREADY, ONLY SCAN ONE MORE TIME. 
 			if [ "$status" == 0 ];then 
 				repetitions=1
 			fi 
 
-			#should verify absense
+			#SHOULD VERIFY ABSENSE
 			for repetition in $(seq 1 $repetitions); 
 			do 
-				#verification loop delay
-				sleep "$verificationLoopDelay"
+				#VERIFICATION LOOP DELAY
+				sleep "$verification_of_away_loop_delay"
 
-				#get percentage
+				#GET PERCENTAGE
 				percentage=$(($status * ( $repetitions - $repetition) / $repetitions))
 
-				#only scan if our status is not already 0
+				#ONLY SCAN IF OUR STATUS IS NOT ALREADY 0
 				if [ "$status" != 0 ];then 
 
-					#mark beginning of scan operation
-					STARTSCAN=$(date +%s%N)
+					#MARK BEGINNING OF SCAN OPERATION
+					start_timer=$(date +%s%N)
 
-					#perform scan
-					nameScanResultRepeat=$(scan $currentDeviceAddress)
+					#PERFORM SCAN
+					name_scan_result_verify=$(scan $current_device_address)
 
-					#mark end of scan operation
-					ENDSCAN=$(date +%s%N)
+					#MARK END OF SCAN OPERATION
+					end_time=$(date +%s%N)
 					
-					#calculate difference
-					SCAN_DURATION=$(( (ENDSCAN - STARTSCAN) / 1000000 )) 
+					#CALCULATE DIFFERENCE
+					duration_timer=$(( (end_time - start_timer) / 1000000 )) 
 
-					#check scan 
-					if [ "$nameScanResultRepeat" != "" ]; then
-						#we know that we must have been at a previously-seen user status
-						deviceStatusArray[$index]="100"
+					#CHECK SCAN 
+					if [ "$name_scan_result_verify" != "" ]; then						
 
-						#update name array
-						deviceNameArray[$index]="$nameScanResultRepeat"
+						#STATE IS SAME && ONLY REPORT CHANGES THEN DISABLE PUBLICATION
+						[ "${device_statuses[$index]}" == '100' ] && [ "$changes_only" == 1 ] && ok_to_publish=0
 
-						publish "/owner/$mqtt_room/$currentDeviceAddress" '100' "$nameScanResultRepeat" "$SCAN_DURATION"
+						#PUBLISH
+						[ "$ok_to_publish" == "1" ] && publish "/owner/$mqtt_room/$current_device_address" '100' "$name_scan_result_verify" "$duration_timer"
 
-						#set at least one device home
-						atLeastOneOwnerDeviceIsHome=1
+						#SET AT LEAST ONE DEVICE HOME
+						one_owner_home=1
 
-						#must break confidence scanning loop; 100' iscovered
+						#WE KNOW THAT WE MUST HAVE BEEN AT A PREVIOUSLY-SEEN USER STATUS
+						device_statuses[$index]="100"
+
+						#UPDATE NAME ARRAY
+						device_names[$index]="$name_scan_result_verify"
+
+						#MUST BREAK CONFIDENCE SCANNING LOOP; 100' ISCOVERED
 						break
 					fi
 				fi 
-				#(>&2 echo "Duration: $SCAN_DURATION ms")
 
-				#update status array
-				deviceStatusArray[$index]="$percentage"
+				#RETREIVE LAST-KNOWN NAME FOR PUBLICATION; SINCE WE OBVIOUSLY DIDN'T RECEIVE A NAME SCAN RESULT 
+				expectedName="${device_names[$index]}"
 
-				#retreive last-known name for publication; since we obviously didn't receive a name scan result 
-				expectedName="${deviceNameArray[$index]}"
+				if [ "$percentage" == "0" ]; then 
+					#STATE IS SAME && ONLY REPORT CHANGES THEN DISABLE PUBLICATION
+					[ "${device_statuses[$index]}" == '0' ] && [ "$changes_only" == 1 ] && ok_to_publish=0
 
-				#report confidence drop
-				publish "/owner/$mqtt_room/$currentDeviceAddress" "$percentage" "$expectedName" "$SCAN_DURATION"
+					#PRINT ZERO CONFIDENCE OF A DEVICE AT HOME
+					[ "$ok_to_publish" == "1" ] && publish "/owner/$mqtt_room/$current_device_address" "0" "$expectedName" "$duration_timer"
+				else 
+					#STATE IS SAME && ONLY REPORT CHANGES THEN DISABLE PUBLICATION
+					[ "${device_statuses[$index]}" == '$percentage' ] && [ "$changes_only" == 1 ] && ok_to_publish=0
 
+					#IF BINARY ONLY, THEN DISABLE PUBLICATION
+					[ "$binary_only" == "1" ] && ok_to_publish=0
+
+					#REPORT CONFIDENCE DROP
+					[ "$ok_to_publish" == "1" ] && publish "/owner/$mqtt_room/$current_device_address" "$percentage" "$expectedName" "$duration_timer"
+				fi 
+
+				#UPDATE STATUS ARRAY
+				device_statuses[$index]="$percentage" 
 			done
 		fi
 	done
 
-	#check status array for any device marked as 'home'
-	if [ "$atLeastOneOwnerDeviceIsHome" == 1 ]; then 
-				#Print Delay for debugging
-		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans, when at least one device is present.${NC}")
-		scanForGuests $delayBetweenOwnerScansWhenPresent
+	#CHECK STATUS ARRAY FOR ANY DEVICE MARKED AS 'HOME'
+	wait_duration=0
+
+	#DETERMINE APPROPRIATE DELAY
+	if [ "$one_owner_home" == 1 ]; then 
+		[ "$debug" == "1" ] && (>&2 debug_echo "Scanning for $number_of_guests guest devices between owner scans (at least one device is present).")
+		 wait_duration=$delay_between_owner_scans_present
 	else
-		(>&2 echo -e "${ORANGE}DEBUG Scanning for $numberOfGuests guest devices between owner scans when no owner device is present.${NC}")
-		scanForGuests $delayBetweenOwnerScansWhenAway
-	fi 
+		[ "$debug" == "1" ] && (>&2 debug_echo "Scanning for $number_of_guests guest devices between owner scans (no owner device is present).")
+		wait_duration=$delay_between_owner_scans_away
+	fi
+
+	#TRIGGER ONLY MODE
+	if [ "$trigger_only_on_message" == 1 ]; then
+		#CHECK IF TRIGGER MODE 1 OR TRIGGER MODE 2
+
+		if [ "$trigger_mode" == 2 ] && [ "$one_owner_home" == 0 ]; then 
+			#SCAN MODE EXPLANATION
+			debug_echo "Periodic scanning enabled. All ($number_of_owners) owner devices away."
+
+			#TRIGGER SCAN FOR GUESTS WITH DEFAULT SETTINGS
+			scan_for_guests	$wait_duration
+		else
+			#TRIGGER SCAN FOR GUESTS WITH SUFFICIENT DELAY FOR ALL GUESTS; SEVEN SECONDS IS 
+			#TWO SECONDS BEYOND IN-BUILT TIMEOUT OF HCITOOL AT 5 SECONDS; ALLOWS FOR SCAN
+			#OF ALL GUEST DEVICES BEFORE NEXT MESSAGE
+			time_now=$(date +%s)
+
+			#CALCULATE TIME DELTA; 
+			time_delta_to_trigger_stop=$(( time_now - trigger_stop_time ))
+
+			#IF VALUE IS POSITIVE, THEN TIME HAS ELAPSED
+			if [[ "$time_delta_to_trigger_stop" -gt 0 ]]; then 
+				#make sure that all guests have been scanned 
+				scan_for_guests	$(( number_of_guests * 7 ))
+
+				debug_echo "Most recent trigger duration has timed out. Awaiting next trigger."
+
+				#AFTER ALL DEVICES ARE SCANNED (POTENTIALLY NOT ALL GUEST DEVICES)
+				while read instruction; do
+
+					#ESTABLISH DURATION OF LOOP DURING WHICH SCANNING  
+					scan_duration=$(echo "$instruction" | grep -oiE "duration\"? {0,}: {0,}\"?[0-9]{1,}" | sed 's/[^0-9]//g' )
+
+					#DEFAULT SCANNING FOR AT LEAST TWO MINTUES
+					[ -z "$scan_duration" ] && scan_duration=120
+
+					#REFRESH CURRENT TIME
+					time_now=$(date +%s)
+
+					#CALCULATED END TIME FOR COMPARISON
+					trigger_stop_time=$(( time_now + scan_duration ))
+
+					#DESYNCHRONIZATION STEP SO THAT ALL DEVICES ARE NOT LIKELY TO BE SCANNING AT ONCE.
+					desync_delay=$[ ( $RANDOM % 6 )  + 1 ]s
+					debug_echo "Received instruction to scan for $scan_duration seconds. Scanning..."
+					sleep "$desync_delay"
+					break
+
+				done < <($mosquitto_sub_path -v -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/scan") 
+			else 
+				#TRIGGER SCAN FOR GUESTS WITH DEFAULT SETTINGS
+				scan_for_guests	$wait_duration
+			fi 
+		fi 
+	else 
+		#TRIGGER SCAN FOR GUESTS WITH DEFAULT SETTINGS
+		scan_for_guests	$wait_duration
+	fi
 done
 
