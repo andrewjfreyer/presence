@@ -145,7 +145,17 @@ sudo rpi-update
 sudo reboot
 ```
 
-4. **[BLUEZ]** Compile/install latest **bluez**
+5. **[BLUETOOTH]** Install Bluetooth Firmware:
+```
+#install bluetooth drivers for Pi Zero W
+sudo apt-get install pi-bluetooth
+
+#verify that bluetooth is working
+sudo service bluetooth start
+sudo service bluetooth status
+```
+
+6. **[OPTIONAL BLUEZ UPGRADE]** Compile/install latest **bluez** 
 ```
 
 #purge old bluez
@@ -182,18 +192,10 @@ rm bluez-X.XX.tar.xz
 
 #update again
 sudo apt-get update
-sudo apt-get upgrade -y
-```
+sudo apt-get upgrade
 
-6. **[BLUETOOTH]** Install Bluetooth Firmware:
-```
-
-#select the option to keep the 'bluez' that is already installed
-sudo apt-get install pi-bluetooth
-
-#verify that bluetooth is working
-sudo service bluetooth start
-sudo service bluetooth status
+#verify bluez version 
+bluetoothd -v
 ```
 
 7. **[REBOOT]**

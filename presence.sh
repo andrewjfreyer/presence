@@ -16,7 +16,7 @@
 # ----------------------------------------------------------------------------------------
 
 #VERSION NUMBER
-VERSION=0.4.26
+VERSION=0.4.27
 
 #COLOR OUTPUT FOR RICH DEBUG 
 ORANGE='\033[0;33m'
@@ -127,7 +127,7 @@ changes_only=0
 trigger_only_on_message=0
 trigger_mode=0
 
-while getopts "h?vdbct:" opt; do
+while getopts "h?Vdbct:" opt; do
     case "$opt" in
     h|\?)
         show_help_text
