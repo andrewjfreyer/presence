@@ -16,7 +16,7 @@
 # ----------------------------------------------------------------------------------------
 
 #VERSION NUMBER
-VERSION=0.4.27
+VERSION=0.4.28
 
 #COLOR OUTPUT FOR RICH DEBUG 
 ORANGE='\033[0;33m'
@@ -466,7 +466,7 @@ fi
 # ----------------------------------------------------------------------------------------
 
 #POST TO MQTT
-$mosquitto_pub_path -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath$1" -m "{\"status\":\"online\"}" --will-retain  --will-topic "$mqtt_topicpath$1" --will-payload "{\"status\":\"offline\"}"
+$mosquitto_pub_path -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/owner/$mqtt_room" -m "{\"status\":\"online\"}" --will-retain  --will-topic "$mqtt_topicpath/owner/$mqtt_room" --will-payload "{\"status\":\"offline\"}"
 
 #MAIN LOOP
 while true; do 

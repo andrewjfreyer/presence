@@ -155,7 +155,10 @@ sudo service bluetooth start
 sudo service bluetooth status
 ```
 
-6. **[OPTIONAL BLUEZ UPGRADE]** Compile/install latest **bluez** 
+6. **[OPTIONAL: BLUEZ UPGRADE]** Compile/install latest **bluez** 
+
+This is not strictly required anymore, as **pi-bluetooth** appears to have been updated to support bluez 0.5.43.
+
 ```
 
 #purge old bluez
@@ -187,8 +190,8 @@ sudo make install
 
 #cleanup
 cd ~
-rm -r bluez-X.XX/
-rm bluez-X.XX.tar.xz
+rm -r bluez-5.49/
+rm bluez-5.49.tar.xz
 
 #update again
 sudo apt-get update
