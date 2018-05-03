@@ -1,13 +1,13 @@
-sander_device_tracker:
+person1_device_tracker:
   module: mqtt_device_tracker
   class: mqtt_device_tracker
-  trigger: sensor.sander_home_occupancy_confidence
-  device: device_tracker.phone_sander
-  device_topic: "/location/sander"
+  trigger: sensor.person1_home_occupancy_confidence
+  device: device_tracker.phone_person1
+  device_topic: "/location/person1"
 
-linda_device_tracker:
+person2_device_tracker:
   module: mqtt_device_tracker
   class: mqtt_device_tracker
-  trigger: sensor.linda_home_occupancy_confidence
-  device: device_tracker.phone_linda
-  device_topic: "/location/linda"
+  trigger: sensor.person2_home_occupancy_confidence
+  device: device_tracker.phone_person2
+  device_topic: "/location/person2"
