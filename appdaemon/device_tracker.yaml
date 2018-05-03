@@ -1,4 +1,4 @@
 - platform: mqtt
   devices:
-    phone_sander: "/location/sander"
-    phone_linda: "/location/linda"
+    phone_sander: "/location/person1"
+    phone_linda: "/location/person2"
