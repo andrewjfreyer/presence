@@ -1,0 +1,22 @@
+- platform: mqtt
+  state_topic: '/presence/owner/room/xx:xx:xx:xx'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'Person1 room'
+- platform: mqtt
+  state_topic: '/presence/owner/room/xx:xx:xx:xx'
+  value_template: '{{ value_json.confidence }}'
+  unit_of_measurement: '%'
+  name: 'person2 room'
+- platform: min_max
+  name: "Person1 Home Occupancy Confidence"
+  type: mean
+  round_digits: 0
+  entity_ids:
+    - sensor.person1_woonkamer
+- platform: min_max
+  name: "Person2 Home Occupancy Confidence"
+  type: mean
+  round_digits: 0
+  entity_ids:
+    - sensor.person2_woonkamer
