@@ -27,7 +27,7 @@ ___
 
 The presence script can be used as an input to a number of [mqtt sensors](https://www.home-assistant.io/components/sensor.mqtt/) in [Home Assistant.](https://www.home-assistant.io). Output from these sensors can be averaged to give a highly-accurate numerical occupancy confidence. 
 
-In order to detect presence in a home that has three floors and a garage, we might inclue one Raspberry Pi per floor. For average houses, a single well-placed sensor can probably work, but for more reliability at the edges of the house, more sensors are better. 
+In order to detect presence in a home that has three floors and a garage, we might include one Raspberry Pi per floor. For average houses, a single well-placed sensor can probably work, but for more reliability at the edges of the house, more sensors are better. 
 
 
 ```
