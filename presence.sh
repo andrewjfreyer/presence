@@ -741,6 +741,12 @@ while true; do
 					break
 
 				done < <($mosquitto_sub_path -v -h "$mqtt_address" -u "$mqtt_user" -P "$mqtt_password" -t "$mqtt_topicpath/scan") 
+
+				pid=`ps -ef | awk '/[m]osquitto_sub/{print $2}'`
+				if [[ "" != "$pid" ]]; then
+					debug_echo "Killing old mosquitto_sub process $pid"
+					kill $pid
+				fi
 			else 
 				#TRIGGER SCAN FOR GUESTS WITH DEFAULT SETTINGS
 				scan_for_guests	$wait_duration
