@@ -248,6 +248,7 @@ Then...
 
 ```
 mqtt_address="ip.address.of.broker"
+mqtt_port="Optional broker network port number. Defaults to 1883"
 mqtt_user="your broker username"
 mqtt_password="your broker password"
 mqtt_topicpath="location"
