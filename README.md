@@ -1,7 +1,7 @@
 presence
 =======
 
-***Note: as of `presence` 0.5.1, guest scanning and beacon scanning are removed from `presence.sh` for simplification. Please consider using [monitor](http://github.com/andrewjfreyer/monitor) instead for beacon scanning and detection and for generic device detection. It is unlikely that `presence` will receive substantive updates after version 0.5.1.***
+***Note: as of `presence` 0.5.1, triggered scans, guest scanning, and beacon scanning are removed from `presence.sh` for simplification. Please consider using [monitor](http://github.com/andrewjfreyer/monitor) instead for beacon scanning and detection and for generic device detection. It is unlikely that `presence` will receive substantive updates after version 0.5.1.***
 
 ____
 
