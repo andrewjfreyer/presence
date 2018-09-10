@@ -1,7 +1,14 @@
 presence
 =======
 
+***Note: as of `presence` 0.5.1, guest scanning and beacon scanning are removed from `presence.sh` for simplification. Please consider using [monitor](http://github.com/andrewjfreyer/monitor) instead for beacon scanning and detection and for generic device detection. It is unlikely that `presence` will receive substantive updates after version 0.5.1.***
+
+____
+
+
 ***TL;DR***: *Bluetooth-based presence detection useful for [mqtt-based](http://mqtt.org) home automation. More granular, responsive, and reliable than device-reported GPS. Cheaper, more reliable, more configurable, and less mqtt-spammy than Happy Bubbles. Does not require any app to be running or installed. Does not require device pairing. Designed to run as service on a [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/).*
+
+Note that the more frequently you scan for devices, the more 2.4GHz bandwidth you will use. This script may cause interference with Wi-Fi or other bluetooth devices for particularly short delays between scans. 
 
 <h1>Summary</h1>
 
@@ -9,17 +16,16 @@ A JSON-formatted MQTT message is reported to a broker whenever a specified bluet
 
 After a delay, another **name** query is sent and, if the device does not respond, a verification-of-absence loop begins that queries for the device (on a shorter interval) a set number of times. Each time, the device does not respond, the **confidence** is reduced, eventually to 0. 
 
-A configuration file defines 'owner devices' and another defines 'guest devices.' The script only scans for guest devices when not scanning for owner devices; detection of owner devices is prioritized over detection of guest devices. 
+A configuration file defines 'owner devices' that contains the mac addresses of the devices you'd like to regularly ping to determine presence. 
 
 Topics are formatted like this:
 
-     location/owner/pi_zero_location/00:00:00:00:00:00 
-     location/guest/pi_zero_location/00:00:00:00:00:00
+     location/pi_zero_location/00:00:00:00:00:00 
 
 Messages are JSON formatted and contain **name** and **confidence** fields, including a javascript-formatted timestamp and a duration of a particular scan (in ms):
 
      { confidence : 100, name : Andrew’s iPhone, scan_duration_ms: 500, timestamp : Sat Apr 21 2018 11:52:04 GMT-0600 (MDT)}
-     { confidence : 0, name : Andrew’s iPhone, scan_duration_ms: 5000, timestamp : Sat Apr 21 2018 11:52:04 GMT-0600 (MDT)}
+     { confidence : 0, name : Andrew’s iPhone or Unknown, scan_duration_ms: 5000, timestamp : Sat Apr 21 2018 11:52:04 GMT-0600 (MDT)}
 
 ___
 
@@ -32,25 +38,25 @@ In order to detect presence in a home that has three floors and a garage, we mig
 
 ```
 - platform: mqtt
-  state_topic: 'location/owner/first floor/00:00:00:00:00:00'
+  state_topic: 'location/first floor/00:00:00:00:00:00'
   value_template: '{{ value_json.confidence }}'
   unit_of_measurement: '%'
   name: 'Andrew First Floor'
 
 - platform: mqtt
-  state_topic: 'location/owner/second floor/00:00:00:00:00:00'
+  state_topic: 'location/second floor/00:00:00:00:00:00'
   value_template: '{{ value_json.confidence }}'
   unit_of_measurement: '%'
   name: 'Andrew Second Floor'
 
 - platform: mqtt
-  state_topic: 'location/owner/third floor/00:00:00:00:00:00'
+  state_topic: 'location/third floor/00:00:00:00:00:00'
   value_template: '{{ value_json.confidence }}'
   unit_of_measurement: '%'
   name: 'Andrew Third Floor'
 
 - platform: mqtt
-  state_topic: 'location/owner/garage/00:00:00:00:00:00'
+  state_topic: 'location/garage/00:00:00:00:00:00'
   value_template: '{{ value_json.confidence }}'
   unit_of_measurement: '%'
   name: 'Andrew Garage'
@@ -255,24 +261,13 @@ mqtt_topicpath="location"
 mqtt_room="your pi's location"
 ```
 
-11. **[CONFIGURE PRESENCE]** create file named **owner_devices** and include mac addresses of devices on separate lines. Do the same with a file named **guest_devices**. Leave either or both files empty if tracking isn't required.
+11. **[CONFIGURE PRESENCE]** create file named **owner_devices** and include mac addresses of devices on separate lines. 
 
 ```
 nano owner_devices
 ```
 
 Then...
-
-```
-00:00:00:00:00 #comments 
-00:00:00:00:00
-```
-
-```
-nano guest_devices
-```
-
-Then... (no content required...)
 
 ```
 00:00:00:00:00 #comments 
