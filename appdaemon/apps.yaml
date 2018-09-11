@@ -1,0 +1,13 @@
+person1_device_tracker:
+  module: mqtt_device_tracker
+  class: mqtt_device_tracker
+  trigger: sensor.person1_home_occupancy_confidence
+  device: device_tracker.phone_person1
+  device_topic: "/location/person1"
+
+person2_device_tracker:
+  module: mqtt_device_tracker
+  class: mqtt_device_tracker
+  trigger: sensor.person2_home_occupancy_confidence
+  device: device_tracker.phone_person2
+  device_topic: "/location/person2"
