@@ -1,11 +1,7 @@
 FROM amd64/ubuntu
 
 # Install and update packages
-RUN apt-get update && apt-get install -y \
-  bluez \
-  git \
-  wget \
-  apt-transport-https
+RUN apt-get update && apt-get install -y bluez git
 
 # Install Mosquitto and friends
 RUN apt-get install -y \
@@ -14,17 +10,7 @@ RUN apt-get install -y \
   mosquitto \
   mosquitto-clients
 
-# Clone repo into working directory
-#RUN git clone https://github.com/andrewjfreyer/presence.git /presence
-
 # Change script permissions
-RUN mkdir /presence
-WORKDIR /presence
-COPY . .
-
 RUN chmod +x presence.sh
 
-# Copy configuration files
-#COPY behavior_preferences mqtt_preferences owner_devices ./
-
-CMD ["presence/presence.sh"]
+CMD ["presence.sh", "-p", "/config"]
