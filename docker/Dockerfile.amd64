@@ -18,7 +18,10 @@ RUN apt-get install -y \
 #RUN git clone https://github.com/andrewjfreyer/presence.git /presence
 
 # Change script permissions
-#WORKDIR /presence
+RUN mkdir /presence
+WORKDIR /presence
+COPY . .
+
 RUN chmod +x presence.sh
 
 # Copy configuration files
