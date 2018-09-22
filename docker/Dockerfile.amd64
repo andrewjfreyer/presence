@@ -18,4 +18,5 @@ RUN apt-get install -y \
 COPY . .
 RUN chmod +x presence.sh
 
-CMD ["presence.sh", "-p", "/config"]
+ENTRYPOINT ["/bin/bash"]
+CMD ["/presence/presence.sh", "-p", "/config"]
