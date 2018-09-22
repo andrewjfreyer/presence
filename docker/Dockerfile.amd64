@@ -27,5 +27,4 @@ RUN chmod +x presence.sh
 # Copy configuration files
 #COPY behavior_preferences mqtt_preferences owner_devices ./
 
-ENTRYPOINT ["/bin/bash"]
-CMD ["presence.sh"]
+CMD ["presence/presence.sh"]
