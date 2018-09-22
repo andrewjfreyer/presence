@@ -15,8 +15,9 @@ RUN apt-get install -y \
   mosquitto-clients
 
 # Copy and change script permissions
-COPY . .
+COPY presence.sh .
 RUN chmod +x presence.sh
 
+# Set entrypoint and run
 ENTRYPOINT ["/bin/bash"]
 CMD ["/presence/presence.sh", "-p", "/config"]

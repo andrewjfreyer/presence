@@ -1,29 +1,23 @@
 FROM resin/raspberry-pi-debian
 
+# Create directory
+RUN mkdir -p /presence
+WORKDIR /presence
+
 # Install and update packages
-RUN apt-get update && apt-get install -y \
-  bluez \
-  git \
-  wget \
-  apt-transport-https
+RUN apt-get update && apt-get install -y bluez git
 
 # Install Mosquitto and friends
-RUN apt-get update
 RUN apt-get install -y \
   libwebsockets-dev \
   libmosquitto-dev \
   mosquitto \
   mosquitto-clients
 
-# Clone repo into working directory
-RUN git clone https://github.com/andrewjfreyer/presence.git /presence
-
-# Change script permissions
-WORKDIR /presence
+# Copy and change script permissions
+COPY presence.sh .
 RUN chmod +x presence.sh
 
-# Copy configuration files
-COPY behavior_preferences mqtt_preferences owner_devices ./
-
+# Set entrypoint and run
 ENTRYPOINT ["/bin/bash"]
-CMD ["/presence/presence.sh"]
+CMD ["/presence/presence.sh", "-p", "/config"]
