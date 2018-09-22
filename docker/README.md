@@ -2,7 +2,7 @@
 
 ### Dockerfiles
 
-The `docker` folder contains Dockerfiles for deploying Presence on different architectures. Choose the file that matches your machine's architecture:
+The `docker` folder contains Dockerfiles for deploying Presence in Docker containers on different architectures. Choose the file that matches your machine's architecture:
 
 **`Dockerfile.amd64`**
 <br>
