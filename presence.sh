@@ -46,6 +46,7 @@ show_help_text() {
 	echo "  presence -d 	print debug messages and mqtt messages"
 	echo "  presence -b 	binary output only; either 100 or 0 confidence"
 	echo "  presence -c 	only post confidence status changes for owners/guests"
+	echo "  presence -p 	path of configuration files"
 	echo "  presence -V		print version"
 }
 
@@ -60,7 +61,7 @@ debug=0
 binary_only=0
 changes_only=0
 
-while getopts "h?Vdbct:" opt; do
+while getopts "h?Vdbcp:t:" opt; do
     case "$opt" in
     h|\?)
         show_help_text
@@ -74,7 +75,9 @@ while getopts "h?Vdbct:" opt; do
 		;;
     b)  binary_only=1
 		;;
-	c)  changes_only=1
+	  c)  changes_only=1
+		;;
+		p)  base_directory="$OPTARG"
 		;;
 	*)	echo "warning: unknown or depreciated option: $opt"
     esac
