@@ -40,3 +40,10 @@ services:
       - <YOUR_LOCAL_CONFIG>:/config
     restart: on-failure
 ```
+
+5. Build and deploy the Docker container by running the following commands:
+
+```
+docker-compose build presence
+docker-compose up -d presence
+```
