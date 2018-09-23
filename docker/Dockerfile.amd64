@@ -1,0 +1,23 @@
+FROM amd64/ubuntu
+
+# Create directory
+RUN mkdir -p /presence
+WORKDIR /presence
+
+# Install and update packages
+RUN apt-get update && apt-get install -y bluez git
+
+# Install Mosquitto and friends
+RUN apt-get install -y \
+  libwebsockets-dev \
+  libmosquitto-dev \
+  mosquitto \
+  mosquitto-clients
+
+# Copy and change script permissions
+COPY presence.sh .
+RUN chmod +x presence.sh
+
+# Set entrypoint and run
+ENTRYPOINT ["/bin/bash"]
+CMD ["/presence/presence.sh", "-p", "/config"]
