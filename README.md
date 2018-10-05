@@ -261,6 +261,12 @@ mqtt_topicpath="location"
 mqtt_room="your pi's location"
 ```
 
+If you want to use ssl/tls for your mqtt broker add this line to your **mqtt_preferences** : 
+```
+mqtt_capath="/etc/ssl/certs/"
+```
+_(/etc/ssl/certs is the default ca path for raspbian)_
+
 11. **[CONFIGURE PRESENCE]** create file named **owner_devices** and include mac addresses of devices on separate lines. 
 
 ```
